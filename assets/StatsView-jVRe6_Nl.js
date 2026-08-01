@@ -1,0 +1,1 @@
+import{a as e,c as t,d as n,l as r,s as i,u as a}from"./index-IS9lFlox.js";var o={};function s(e,r){return n(),t(`p`,null,`此區塊先保留，下一階段可加入月統計、類型占比與趨勢圖。`)}var c=e(o,[[`render`,s]]),l={class:`panel muted`},u=a({__name:`StatsView`,setup(e){return(e,a)=>(n(),t(`section`,l,[a[0]||=i(`h2`,null,`統計表`,-1),r(c)]))}});export{u as default};
