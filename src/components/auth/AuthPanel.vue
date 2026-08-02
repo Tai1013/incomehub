@@ -9,7 +9,7 @@ const router = useRouter()
 const activeTab = ref<'login' | 'register'>('login')
 
 const form = reactive({
-  email: 'admin@incomehub.app',
+  email: '',
   password: '',
 })
 
