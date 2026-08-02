@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useAuthStore } from '../../stores/auth'
@@ -7,11 +7,58 @@ import { useAuthStore } from '../../stores/auth'
 const authStore = useAuthStore()
 const router = useRouter()
 const activeTab = ref<'login' | 'register'>('login')
+const EMAIL_HISTORY_KEY = 'incomehub.email.history'
+const MAX_EMAIL_HISTORY = 8
 
 const form = reactive({
   email: '',
   password: '',
 })
+
+const emailHistory = ref<string[]>([])
+
+const loadEmailHistory = () => {
+  try {
+    const raw = localStorage.getItem(EMAIL_HISTORY_KEY)
+    if (!raw) return
+
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return
+
+    emailHistory.value = parsed
+      .filter((item): item is string => typeof item === 'string')
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0)
+      .slice(0, MAX_EMAIL_HISTORY)
+  } catch {
+    emailHistory.value = []
+  }
+}
+
+const saveEmailToHistory = (email: string) => {
+  const normalizedEmail = email.trim()
+  if (!normalizedEmail) return
+
+  const nextHistory = [
+    normalizedEmail,
+    ...emailHistory.value.filter((item) => item.toLowerCase() !== normalizedEmail.toLowerCase()),
+  ].slice(0, MAX_EMAIL_HISTORY)
+
+  emailHistory.value = nextHistory
+  localStorage.setItem(EMAIL_HISTORY_KEY, JSON.stringify(nextHistory))
+}
+
+const queryEmailHistory = (
+  queryString: string,
+  callback: (results: Array<{ value: string }>) => void,
+) => {
+  const keyword = queryString.trim().toLowerCase()
+  const results = emailHistory.value
+    .filter((item) => !keyword || item.toLowerCase().includes(keyword))
+    .map((item) => ({ value: item }))
+
+  callback(results)
+}
 
 const handleLogin = async () => {
   if (!form.email || !form.password) {
@@ -21,6 +68,7 @@ const handleLogin = async () => {
 
   try {
     await authStore.signInWithEmail(form.email, form.password)
+    saveEmailToHistory(form.email)
     ElMessage.success('登入成功')
     router.push('/home')
   } catch (error) {
@@ -36,12 +84,17 @@ const handleRegister = async () => {
 
   try {
     await authStore.signUpWithEmail(form.email, form.password)
+    saveEmailToHistory(form.email)
     ElMessage.success('註冊成功，請使用相同帳號登入')
     activeTab.value = 'login'
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : '註冊失敗，請稍後再試')
   }
 }
+
+onMounted(() => {
+  loadEmailHistory()
+})
 </script>
 
 <template>
@@ -61,7 +114,15 @@ const handleRegister = async () => {
 
       <el-form label-position="top">
         <el-form-item label="Email">
-          <el-input v-model="form.email" type="email" placeholder="you@example.com" autocomplete="email" />
+          <el-autocomplete
+            v-model="form.email"
+            :fetch-suggestions="queryEmailHistory"
+            trigger-on-focus
+            clearable
+            placeholder="you@example.com"
+            autocomplete="email"
+            style="width: 100%"
+          />
         </el-form-item>
 
         <el-form-item label="密碼">

@@ -1,10 +1,20 @@
 <script setup lang="ts">
 import { Menu, Plus } from '@element-plus/icons-vue'
+import { useRoute, useRouter } from 'vue-router'
+
+const route = useRoute()
+const router = useRouter()
 
 defineEmits<{
   addIncome: []
   openMenu: []
 }>()
+
+const goHome = () => {
+  if (route.path !== '/home') {
+    router.push('/home')
+  }
+}
 </script>
 
 <template>
@@ -14,7 +24,7 @@ defineEmits<{
     </div>
 
     <div class="header-center">
-      <h1 class="app-title">INCOMEHUB</h1>
+      <h1 class="app-title" role="button" tabindex="0" @click="goHome" @keydown.enter="goHome">INCOMEHUB</h1>
     </div>
 
     <div class="header-right">
@@ -56,6 +66,7 @@ defineEmits<{
   letter-spacing: 2px;
   font-weight: 700;
   color: var(--el-text-color-primary);
+  cursor: pointer;
 }
 
 .icon-button {

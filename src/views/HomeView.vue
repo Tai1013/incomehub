@@ -9,7 +9,11 @@ import TypeTrendChart from '../components/income/charts/TypeTrendChart.vue'
 const router = useRouter()
 const authStore = useAuthStore()
 
-const userEmail = computed(() => authStore.user?.email ?? '未登入')
+const userName = computed(() => {
+  const email = authStore.user?.email
+  if (!email) return '未登入'
+  return email.split('@')[0]
+})
 
 const goTo = (path: '/list' | '/data') => {
   router.push(path)
@@ -20,8 +24,7 @@ const goTo = (path: '/list' | '/data') => {
   <div style="display: flex; flex-direction: column; gap: 12px;">
     <section class="panel brand-panel">
       <p class="eyebrow">incomehub</p>
-      <h1>歡迎回來</h1>
-      <p class="subtitle">目前登入：{{ userEmail }}</p>
+      <h1 style="margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">歡迎回來 {{ userName }}</h1>
     </section>
     <section class="panel">
       <h2>快速前往</h2>

@@ -13,7 +13,11 @@ const router = useRouter()
 const incomeStore = useIncomeStore()
 const authStore = useAuthStore()
 const drawerVisible = ref(false)
-const userEmail = computed(() => authStore.user?.email ?? '未登入')
+const userName = computed(() => {
+  const email = authStore.user?.email
+  if (!email) return '未登入'
+  return email.split('@')[0]
+})
 
 watch(
   () => authStore.user?.id,
@@ -78,7 +82,7 @@ const handleMenuSelect = (index: string) => {
         <h5 class="drawer-title">IncomeHub 導覽</h5>
 
         <section class="drawer-user-block">
-          <p class="drawer-user-value">{{ userEmail }}</p>
+          <p class="drawer-user-value">{{ userName }}</p>
         </section>
 
         <el-menu :default-active="route.path" @select="handleMenuSelect">
@@ -164,7 +168,9 @@ const handleMenuSelect = (index: string) => {
   font-size: 0.96rem;
   font-weight: 600;
   color: #9a3412;
-  word-break: break-all;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .drawer-menu-divider {
