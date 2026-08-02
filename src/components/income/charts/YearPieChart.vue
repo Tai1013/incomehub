@@ -1,11 +1,13 @@
 <template>
   <el-card shadow="never">
     <template #header>
-      <el-space>
+      <div class="chart-header">
         <span>當年分類佔比</span>
-        <el-tag type="info" size="small">{{ currentYearLabel }}</el-tag>
-        <el-tag size="small">總計 {{ totalFormatted }}</el-tag>
-      </el-space>
+        <div class="chart-header-tags">
+          <el-tag type="info" size="small">{{ currentYearLabel }}</el-tag>
+          <el-tag size="small">總計 {{ totalFormatted }}</el-tag>
+        </div>
+      </div>
     </template>
     <div v-if="hasData" style="max-width: 360px; margin: 0 auto;">
       <PolarArea :data="chartData" :options="chartOptions" />

@@ -1,10 +1,12 @@
 <template>
   <el-card shadow="never">
     <template #header>
-      <el-space>
+      <div class="chart-header">
         <span>收入日曆熱力圖</span>
-        <el-tag type="info" size="small">{{ currentYear }}年</el-tag>
-      </el-space>
+        <div class="chart-header-tags">
+          <el-tag type="info" size="small">{{ currentYear }}年</el-tag>
+        </div>
+      </div>
     </template>
     <div class="heatmap-scroll">
       <div class="heatmap">

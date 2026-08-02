@@ -1,27 +1,30 @@
 <template>
   <el-card shadow="never">
     <template #header>
-      <el-space wrap>
-        <el-select
-          v-model="selectedType"
-          size="small"
-          style="width: 120px;"
-          :teleported="true"
-          popper-class="bonus-type-popper"
-        >
-          <template #prefix>
-            <el-icon v-if="selectedOption?.icon" style="vertical-align: middle;">
-              <component :is="selectedOption.icon" />
-            </el-icon>
-          </template>
-          <el-option v-for="o in INCOME_TYPE_OPTIONS" :key="o.value" :label="o.label" :value="o.value">
-            <el-icon v-if="o.icon" style="margin-right: 4px; vertical-align: middle;"><component :is="o.icon" /></el-icon>
-            <span>{{ o.label }}</span>
-          </el-option>
-        </el-select>
-        <el-tag type="info" size="small">{{ yearRange }}</el-tag>
-        <el-tag size="small">今年累計 {{ thisYearTotal }}</el-tag>
-      </el-space>
+      <div class="chart-header">
+        <span>分類收入趨勢</span>
+        <div class="chart-header-tags">
+          <el-select
+            v-model="selectedType"
+            size="small"
+            style="width: 120px;"
+            :teleported="true"
+            popper-class="bonus-type-popper"
+          >
+            <template #prefix>
+              <el-icon v-if="selectedOption?.icon" style="vertical-align: middle;">
+                <component :is="selectedOption.icon" />
+              </el-icon>
+            </template>
+            <el-option v-for="o in INCOME_TYPE_OPTIONS" :key="o.value" :label="o.label" :value="o.value">
+              <el-icon v-if="o.icon" style="margin-right: 4px; vertical-align: middle;"><component :is="o.icon" /></el-icon>
+              <span>{{ o.label }}</span>
+            </el-option>
+          </el-select>
+          <el-tag type="info" size="small">{{ yearRange }}</el-tag>
+          <el-tag size="small">今年累計 {{ thisYearTotal }}</el-tag>
+        </div>
+      </div>
     </template>
     <div v-if="hasData">
       <Line :data="chartData" :options="chartOptions" />

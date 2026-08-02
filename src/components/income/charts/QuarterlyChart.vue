@@ -1,11 +1,13 @@
 <template>
   <el-card shadow="never">
     <template #header>
-      <el-space>
+      <div class="chart-header">
         <span>季度收入分析</span>
-        <el-tag type="info" size="small">{{ currentYear }}年</el-tag>
-        <el-tag size="small">年總計 {{ totalFormatted }}</el-tag>
-      </el-space>
+        <div class="chart-header-tags">
+          <el-tag type="info" size="small">{{ currentYear }}年</el-tag>
+          <el-tag size="small">年總計 {{ totalFormatted }}</el-tag>
+        </div>
+      </div>
     </template>
     <div v-if="hasData">
       <Bar :data="chartData" :options="chartOptions" />

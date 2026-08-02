@@ -1,7 +1,9 @@
 <template>
   <el-card shadow="never">
     <template #header>
-      <span>歷年收入總覽</span>
+      <div class="chart-header">
+        <span>歷年收入總覽</span>
+      </div>
     </template>
     <div v-if="hasData">
       <Bar :data="chartData" :options="chartOptions" />

@@ -1,10 +1,12 @@
 <template>
   <el-card shadow="never">
     <template #header>
-      <el-space>
+      <div class="chart-header">
         <span>近兩年每月總和</span>
-        <el-tag type="info" size="small">{{ yearRange }}</el-tag>
-      </el-space>
+        <div class="chart-header-tags">
+          <el-tag type="info" size="small">{{ yearRange }}</el-tag>
+        </div>
+      </div>
     </template>
     <div v-if="hasData">
       <Line :data="chartData" :options="chartOptions" />

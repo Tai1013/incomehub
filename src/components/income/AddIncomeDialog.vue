@@ -24,6 +24,7 @@
             format="YYYY-MM-DD"
             placeholder="請選擇日期"
             class="field-control"
+            readonly
           />
         </el-form-item>
 

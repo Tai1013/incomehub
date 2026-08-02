@@ -1,10 +1,12 @@
 <template>
   <el-card shadow="never">
     <template #header>
-      <el-space>
+      <div class="chart-header">
         <span>月最高 / 日均 / 最低</span>
-        <el-tag type="info" size="small">{{ currentYear }}年（每日）</el-tag>
-      </el-space>
+        <div class="chart-header-tags">
+          <el-tag type="info" size="small">{{ currentYear }}年（每日）</el-tag>
+        </div>
+      </div>
     </template>
     <div v-if="hasData">
       <Line :data="chartData" :options="chartOptions" />
