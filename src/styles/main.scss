@@ -25,11 +25,10 @@ body {
 }
 
 @media (hover: none) {
-  button:hover,
-  .el-button:hover,
-  .el-button:hover span {
-    background-color: unset !important;
-    color: unset !important;
+  .el-button:hover {
+    --el-button-hover-bg-color: var(--el-button-bg-color) !important;
+    --el-button-hover-border-color: var(--el-button-border-color) !important;
+    --el-button-hover-text-color: var(--el-button-text-color) !important;
   }
 }
 
