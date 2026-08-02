@@ -54,7 +54,7 @@ function openAddIncomeDialog() {
 
 <style scoped lang="scss">
 .page-root {
-  min-height: 100vh;
+  height: 100%;
   display: flex;
   justify-content: center;
   align-items: stretch;
@@ -67,9 +67,8 @@ function openAddIncomeDialog() {
   flex-direction: column;
   width: 100%;
   max-width: 430px;
-  min-height: 100vh;
+  height: 100dvh;
   background: var(--el-bg-color);
-  overflow: hidden;
   font-family: var(--el-font-family);
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
 }
@@ -79,6 +78,7 @@ function openAddIncomeDialog() {
   padding: 10px 10px 18px;
   overflow-x: hidden;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .list-panel {

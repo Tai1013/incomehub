@@ -1,3 +1,9 @@
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
 :root {
   font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
   color: var(--el-text-color-regular);
@@ -20,13 +26,14 @@
 
 body {
   margin: 0;
-  min-height: 100vh;
+  min-height: 100%;
   background: var(--el-bg-color-page);
   color: var(--el-text-color-regular);
+  touch-action: manipulation;
 }
 
 #app {
-  min-height: 100vh;
+  height: 100%;
   width: 100%;
   margin: 0;
   padding: 0;
@@ -213,8 +220,10 @@ body {
   border-top: 1px solid var(--el-border-color);
 }
 
-.keypad-grid .el-button:hover {
-  transform: translateY(-1px);
+@media (hover: hover) {
+  .keypad-grid .el-button:hover {
+    transform: translateY(-1px);
+  }
 }
 
 .submit-btn {

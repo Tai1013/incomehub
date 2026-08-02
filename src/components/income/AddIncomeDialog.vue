@@ -301,8 +301,10 @@ watch(
   transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
 }
 
-.type-tile:hover {
-  border-color: var(--el-color-primary-light-5);
+@media (hover: hover) {
+  .type-tile:hover {
+    border-color: var(--el-color-primary-light-5);
+  }
 }
 
 .type-tile.is-active {

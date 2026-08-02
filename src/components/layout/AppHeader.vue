@@ -59,10 +59,13 @@ defineEmits<{
 
 .icon-button {
   --el-button-size: 34px;
-  transition: transform 0.2s ease;
 
-  &:hover {
-    transform: translateY(-1px);
+  @media (hover: hover) {
+    transition: transform 0.2s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+    }
   }
 }
 </style>
