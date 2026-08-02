@@ -128,7 +128,7 @@ function getTodayDate() {
         value-format="YYYY-MM-DD"
         placeholder="選擇日期"
         style="width: 100%"
-        readonly
+        :editable="false"
       />
     </el-form-item>
 
