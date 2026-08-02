@@ -69,6 +69,25 @@
         </el-button>
       </div>
 
+      <el-form
+        ref="descFormRef"
+        :model="formModel"
+        label-position="top"
+        class="income-form"
+      >
+        <el-form-item label="說明" prop="description">
+          <el-input
+            v-model="formModel.description"
+            type="textarea"
+            :rows="3"
+            maxlength="100"
+            show-word-limit
+            resize="none"
+            placeholder="補充這筆收入的來源或備註"
+          />
+        </el-form-item>
+      </el-form>
+
       <el-space class="action-buttons" fill>
         <el-button type="primary" class="submit-button" @click="submitIncome()">{{ submitButtonText }}</el-button>
         <el-button v-if="!isEditing" class="submit-button" @click="submitIncome(true)">連續新增</el-button>
@@ -96,6 +115,7 @@ const formModel = reactive({
   date: getTodayDate(),
   type: INCOME_TYPES[0] as IncomeType,
   amount: null as number | null,
+  description: '',
 })
 
 const rules: FormRules<typeof formModel> = {
@@ -178,6 +198,7 @@ const backspaceAmount = () => {
 const resetForm = () => {
   formModel.date = getTodayDate()
   formModel.type = INCOME_TYPES[0] as IncomeType
+  formModel.description = ''
   clearAmount()
   formRef.value?.clearValidate()
 }
@@ -187,6 +208,7 @@ const applyEntryToForm = (entry: IncomeEntry) => {
   formModel.type = entry.type
   amountInput.value = String(entry.amount)
   formModel.amount = entry.amount
+  formModel.description = entry.description ?? ''
   nextTick(() => {
     formRef.value?.clearValidate()
   })
@@ -223,29 +245,41 @@ const submitIncome = async (keepOpen = false) => {
   }
 
   if (editingEntry.value) {
-    const updated = incomeStore.updateEntry(editingEntry.value.date, editingEntry.value.id, {
+    try {
+      const updated = await incomeStore.updateEntry(editingEntry.value.date, editingEntry.value.id, {
+        date: formModel.date,
+        type: formModel.type,
+        amount: parsedAmount.value,
+        description: formModel.description,
+      })
+
+      if (!updated) {
+        ElMessage.warning('找不到要修改的收入資料')
+        return
+      }
+
+      ElMessage.success('修改成功')
+      dialogVisible.value = false
+      return
+    } catch (error) {
+      ElMessage.error(error instanceof Error ? error.message : '修改失敗，請稍後再試')
+      return
+    }
+  }
+
+  try {
+    await incomeStore.addEntry({
       date: formModel.date,
       type: formModel.type,
       amount: parsedAmount.value,
+      description: formModel.description,
     })
 
-    if (!updated) {
-      ElMessage.warning('找不到要修改的收入資料')
-      return
-    }
-
-    ElMessage.success('修改成功')
-    dialogVisible.value = false
+    ElMessage.success('新增成功')
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : '新增失敗，請稍後再試')
     return
   }
-
-  incomeStore.addEntry({
-    date: formModel.date,
-    type: formModel.type,
-    amount: parsedAmount.value,
-  })
-
-  ElMessage.success('新增成功')
 
   if (keepOpen) {
     resetForContinuousEntry()
@@ -331,7 +365,7 @@ watch(
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0;
-  margin-top: 10px;
+  margin-bottom: 14px;
   border: 1px solid var(--el-border-color);
   border-radius: 10px;
   overflow: hidden;
@@ -363,7 +397,6 @@ watch(
 
 .action-buttons {
   width: 100%;
-  margin-top: 14px;
 }
 
 .submit-button {

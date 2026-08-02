@@ -1,8 +1,8 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
+import { createIncomeEntry, deleteIncomeEntry, listIncomeEntries, updateIncomeEntry } from '../services/incomeApi'
 import type { IncomeEntry, IncomeType } from '../types/income'
-
-const STORAGE_KEY = 'income-hub-entries'
+import { useLoading } from '../composables/useLoading'
 
 export interface IncomeDayList {
   date: string
@@ -10,9 +10,37 @@ export interface IncomeDayList {
 }
 
 export const useIncomeStore = defineStore('income', () => {
-  const dailyLists = ref<IncomeDayList[]>(loadDailyLists())
+  const { load, unLoad } = useLoading()
+  const dailyLists = ref<IncomeDayList[]>([])
   const dialogVisible = ref(false)
   const editingEntry = ref<IncomeEntry | null>(null)
+  const loading = ref(false)
+  const initialized = ref(false)
+  const errorMessage = ref('')
+
+  const fetchEntries = async () => {
+    loading.value = true
+    load()
+    errorMessage.value = ''
+
+    try {
+      const entries = await listIncomeEntries()
+      dailyLists.value = groupEntriesByDate(entries)
+      initialized.value = true
+    } catch (error) {
+      errorMessage.value = error instanceof Error ? error.message : '讀取收入資料失敗'
+      throw error
+    } finally {
+      loading.value = false
+      unLoad()
+    }
+  }
+
+  const resetEntries = () => {
+    dailyLists.value = []
+    initialized.value = false
+    errorMessage.value = ''
+  }
 
   function openAddDialog() {
     editingEntry.value = null
@@ -29,49 +57,40 @@ export const useIncomeStore = defineStore('income', () => {
     editingEntry.value = null
   }
 
-  function addEntry(payload: { date: string; type: IncomeType; amount: number }) {
-    const newEntry: IncomeEntry = {
-      id: crypto.randomUUID(),
-      date: payload.date,
-      type: payload.type,
-      amount: payload.amount,
+  const addEntry = async (payload: { date: string; type: IncomeType; amount: number; description?: string }) => {
+    load()
+    try {
+      const newEntry = await createIncomeEntry(payload)
+      dailyLists.value = groupEntriesByDate([newEntry, ...flattenDailyLists(dailyLists.value)])
+      return newEntry
+    } finally {
+      unLoad()
     }
-
-    const target = dailyLists.value.find((group) => group.date === payload.date)
-
-    if (target) {
-      target.items.unshift(newEntry)
-    } else {
-      dailyLists.value.unshift({
-        date: payload.date,
-        items: [newEntry],
-      })
-      dailyLists.value.sort((a, b) => b.date.localeCompare(a.date))
-    }
-
-    persistDailyLists(dailyLists.value)
   }
 
-  function removeEntry(date: string, id: string) {
+  const removeEntry = async (date: string, id: string) => {
     const target = dailyLists.value.find((group) => group.date === date)
-    if (!target) {
-      return
+    if (!target || !target.items.some((item) => item.id === id)) {
+      return false
     }
 
-    target.items = target.items.filter((item) => item.id !== id)
+    load()
+    try {
+      await deleteIncomeEntry(id)
 
-    if (target.items.length === 0) {
-      dailyLists.value = dailyLists.value.filter((group) => group.date !== date)
+      const nextEntries = flattenDailyLists(dailyLists.value).filter((item) => item.id !== id)
+      dailyLists.value = groupEntriesByDate(nextEntries)
+      return true
+    } finally {
+      unLoad()
     }
-
-    persistDailyLists(dailyLists.value)
   }
 
-  function updateEntry(
+  const updateEntry = async (
     currentDate: string,
     id: string,
-    payload: { date: string; type: IncomeType; amount: number },
-  ) {
+    payload: { date: string; type: IncomeType; amount: number; description?: string },
+  ) => {
     const target = dailyLists.value.find((group) => group.date === currentDate)
     if (!target) {
       return false
@@ -82,82 +101,49 @@ export const useIncomeStore = defineStore('income', () => {
       return false
     }
 
-    const currentEntry = target.items[entryIndex]
-    const nextEntry: IncomeEntry = {
-      ...currentEntry,
-      date: payload.date,
-      type: payload.type,
-      amount: payload.amount,
+    load()
+    try {
+      const nextEntry = await updateIncomeEntry(id, payload)
+      const nextEntries = flattenDailyLists(dailyLists.value).map((item) => (item.id === id ? nextEntry : item))
+      dailyLists.value = groupEntriesByDate(nextEntries)
+      return true
+    } finally {
+      unLoad()
     }
-
-    target.items.splice(entryIndex, 1)
-
-    if (target.items.length === 0) {
-      dailyLists.value = dailyLists.value.filter((group) => group.date !== currentDate)
-    }
-
-    const nextTarget = dailyLists.value.find((group) => group.date === payload.date)
-    if (nextTarget) {
-      nextTarget.items.unshift(nextEntry)
-    } else {
-      dailyLists.value.unshift({
-        date: payload.date,
-        items: [nextEntry],
-      })
-    }
-
-    dailyLists.value.sort((a, b) => b.date.localeCompare(a.date))
-    persistDailyLists(dailyLists.value)
-    return true
   }
 
   return {
     dailyLists,
     dialogVisible,
     editingEntry,
+    loading,
+    initialized,
+    errorMessage,
     openAddDialog,
     openEditDialog,
     closeDialog,
+    fetchEntries,
+    resetEntries,
     addEntry,
     removeEntry,
     updateEntry,
   }
 })
 
-function loadDailyLists(): IncomeDayList[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) {
-      return []
-    }
-
-    const parsed = JSON.parse(raw) as unknown
-    if (!Array.isArray(parsed)) {
-      return []
-    }
-
-    // Backward compatibility: migrate old flat entry list to grouped day list.
-    if (parsed.length > 0 && typeof parsed[0] === 'object' && parsed[0] !== null && 'id' in parsed[0]) {
-      const oldEntries = parsed as IncomeEntry[]
-      const grouped = new Map<string, IncomeEntry[]>()
-
-      for (const entry of oldEntries) {
-        const bucket = grouped.get(entry.date) ?? []
-        bucket.push(entry)
-        grouped.set(entry.date, bucket)
-      }
-
-      return Array.from(grouped.entries())
-        .map(([date, items]) => ({ date, items }))
-        .sort((a, b) => b.date.localeCompare(a.date))
-    }
-
-    return (parsed as IncomeDayList[]).sort((a, b) => b.date.localeCompare(a.date))
-  } catch {
-    return []
-  }
+function flattenDailyLists(groups: IncomeDayList[]) {
+  return groups.flatMap((group) => group.items)
 }
 
-function persistDailyLists(next: IncomeDayList[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+function groupEntriesByDate(entries: IncomeEntry[]) {
+  const grouped = new Map<string, IncomeEntry[]>()
+
+  for (const entry of entries) {
+    const bucket = grouped.get(entry.date) ?? []
+    bucket.push(entry)
+    grouped.set(entry.date, bucket)
+  }
+
+  return Array.from(grouped.entries())
+    .map(([date, items]) => ({ date, items }))
+    .sort((a, b) => b.date.localeCompare(a.date))
 }

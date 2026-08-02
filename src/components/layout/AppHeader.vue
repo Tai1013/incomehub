@@ -1,15 +1,16 @@
 <script setup lang="ts">
-import { Setting, Plus } from '@element-plus/icons-vue'
+import { Menu, Plus } from '@element-plus/icons-vue'
 
 defineEmits<{
   addIncome: []
+  openMenu: []
 }>()
 </script>
 
 <template>
   <header class="app-header">
     <div class="header-left">
-      <el-button class="icon-button" :icon="Setting" aria-label="設定" circle />
+      <el-button class="icon-button" :icon="Menu" aria-label="開啟選單" circle @click="$emit('openMenu')" />
     </div>
 
     <div class="header-center">

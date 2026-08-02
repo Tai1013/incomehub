@@ -5,7 +5,7 @@
 
   <el-empty v-if="dailyLists.length === 0" description="目前沒有收入紀錄" />
 
-  <el-space v-else direction="vertical" :size="10" fill style="width: 100%;">
+  <div v-else style="display: grid; gap: 10px; width: 100%;">
     <el-card
       v-for="yearGroup in yearGroups"
       :key="yearGroup.year"
@@ -22,20 +22,20 @@
         @keydown.enter.prevent="toggleYear(yearGroup.year)"
         @keydown.space.prevent="toggleYear(yearGroup.year)"
       >
-        <el-space :size="8" alignment="center">
+        <div style="display: inline-flex; align-items: center; gap: 8px;">
           <strong>{{ yearGroup.year }}年</strong>
           <el-tag round effect="light" size="small" type="info">{{ yearGroup.rowCount }} 筆</el-tag>
-        </el-space>
+        </div>
 
-        <el-space :size="8" alignment="center">
+        <div style="display: inline-flex; align-items: center; gap: 8px;">
           <strong style="color: var(--el-color-primary-dark-2);">{{ formatCurrency(yearGroup.total) }}</strong>
           <el-icon aria-hidden="true">
             <component :is="isYearCollapsed(yearGroup.year) ? ArrowDown : ArrowUp" />
           </el-icon>
-        </el-space>
+        </div>
       </header>
 
-      <el-space v-if="!isYearCollapsed(yearGroup.year)" direction="vertical" :size="8" fill style="margin-top: 8px; width: 100%;">
+      <div v-if="!isYearCollapsed(yearGroup.year)" style="display: grid; gap: 8px; margin-top: 8px; width: 100%;">
         <el-card
           v-for="day in yearGroup.days"
           :key="day.date"
@@ -50,40 +50,50 @@
 
           <div style="margin-top: 8px; width: 100%;">
             <template v-for="(item, index) in day.items" :key="item.id">
-              <div style="display: flex; align-items: center; justify-content: space-between; min-height: 34px; width: 100%;">
-                <el-tag size="small" type="success" effect="light">{{ item.type }}</el-tag>
-                <el-space :size="10" alignment="center">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 34px; width: 100%;">
+                <div style="display: grid; gap: 6px; min-width: 0; flex: 1;">
+                  <el-tag size="small" type="success" effect="light" style="width: fit-content;">{{ item.type }}</el-tag>
+                </div>
+                <div style="display: inline-flex; align-items: center; gap: 10px;">
                   <strong>{{ formatCurrency(item.amount) }}</strong>
-                  <el-button
-                    circle
-                    plain
-                    :icon="EditPen"
-                    aria-label="編輯金額"
-                    @click="editItem(item)"
-                  />
-                  <el-button
-                    circle
-                    plain
-                    type="danger"
-                    :icon="Delete"
-                    aria-label="刪除細項"
-                    @click="deleteItem(day.date, item.id)"
-                  />
-                </el-space>
+                  <div>
+                    <el-button
+                      circle
+                      plain
+                      :icon="EditPen"
+                      aria-label="編輯金額"
+                      @click="editItem(item)"
+                    />
+                    <el-button
+                      circle
+                      plain
+                      type="danger"
+                      :icon="Delete"
+                      aria-label="刪除細項"
+                      @click="deleteItem(day.date, item.id)"
+                    />
+                  </div>
+                </div>
               </div>
+              <span
+                v-if="item.description"
+                style="display: block; font-size: 12px; line-height: 1.45; color: var(--el-text-color-secondary); word-break: break-word; border: 1px solid var(--el-border-color-lighter); border-radius: 8px; padding: 4px 8px; margin-top: 4px;"
+              >
+                {{ item.description }}
+              </span>
               <el-divider v-if="index < day.items.length - 1" style="margin: 6px 0; width: 100%;" />
             </template>
           </div>
         </el-card>
-      </el-space>
+      </div>
     </el-card>
-  </el-space>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import dayjs from 'dayjs'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowDown, ArrowUp, Delete, EditPen } from '@element-plus/icons-vue'
 import { useIncomeEntries } from '../../composables/useIncomeEntries'
 import { useIncomeStore } from '../../stores/income'
@@ -139,9 +149,30 @@ const yearGroups = computed(() => {
   return Array.from(grouped.values()).sort((a, b) => b.year.localeCompare(a.year))
 })
 
-const deleteItem = (date: string, id: string) => {
-  removeEntry(date, id)
-  ElMessage.success('已刪除該筆收入')
+const deleteItem = async (date: string, id: string) => {
+  try {
+    await ElMessageBox.confirm('確定要刪除這筆收入嗎？', '刪除確認', {
+      confirmButtonText: '刪除',
+      cancelButtonText: '取消',
+      type: 'warning',
+      center: true,
+    })
+  } catch {
+    return
+  }
+
+  try {
+    const removed = await removeEntry(date, id)
+
+    if (!removed) {
+      ElMessage.warning('找不到要刪除的收入資料')
+      return
+    }
+
+    ElMessage.success('已刪除該筆收入')
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : '刪除失敗，請稍後再試')
+  }
 }
 
 const editItem = (entry: IncomeEntry) => {

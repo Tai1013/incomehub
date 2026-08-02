@@ -1,28 +1,90 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
+import { supabase } from '../lib/supabase'
+import { useLoading } from '../composables/useLoading'
+
+const { load, unLoad } = useLoading()
 
 const router = createRouter({
   history: createWebHashHistory(import.meta.env.VITE_APP_BASE),
   routes: [
     {
+      path: '/login',
+      name: 'login',
+      component: () => import('../views/LoginView.vue'),
+      meta: { guestOnly: true },
+    },
+    {
       path: '/',
-      redirect: '/income/list',
+      component: () => import('../views/AppLayoutView.vue'),
+      meta: { requiresAuth: true },
+      children: [
+        {
+          path: '',
+          redirect: '/home',
+        },
+        {
+          path: 'home',
+          name: 'home',
+          component: () => import('../views/HomeView.vue'),
+        },
+        {
+          path: 'list',
+          name: 'list',
+          component: () => import('../views/ListView.vue'),
+        },
+        {
+          path: 'data',
+          name: 'data',
+          component: () => import('../views/DataView.vue'),
+        },
+        {
+          path: 'settings',
+          name: 'settings',
+          component: () => import('../views/SettingsView.vue'),
+        },
+        {
+          path: 'income/list',
+          redirect: '/list',
+        },
+        {
+          path: 'stats',
+          redirect: '/data',
+        },
+      ],
     },
     {
-      path: '/income/new',
-      name: 'income-new',
-      redirect: '/income/list',
-    },
-    {
-      path: '/income/list',
-      name: 'income-list',
-      component: () => import('../views/DailyListView.vue'),
-    },
-    {
-      path: '/stats',
-      name: 'stats',
-      component: () => import('../views/StatsView.vue'),
+      path: '/:pathMatch(.*)*',
+      redirect: '/home',
     },
   ],
+})
+
+router.beforeEach(async (to) => {
+  load()
+  let session = null
+
+  try {
+    const {
+      data: { session: nextSession },
+    } = await supabase.auth.getSession()
+    session = nextSession
+  } finally {
+    unLoad()
+  }
+
+  const isAuthed = Boolean(session?.user)
+  const needsAuth = to.matched.some((record) => record.meta.requiresAuth)
+  const guestOnly = to.matched.some((record) => record.meta.guestOnly)
+
+  if (needsAuth && !isAuthed) {
+    return '/login'
+  }
+
+  if (guestOnly && isAuthed) {
+    return '/home'
+  }
+
+  return true
 })
 
 export default router

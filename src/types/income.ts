@@ -5,12 +5,7 @@ export interface IncomeEntry {
   date: string
   type: IncomeType
   amount: number
-}
-
-export interface IncomeFormModel {
-  date: string
-  type: IncomeType | ''
-  amount: number | null
+  description?: string
 }
 
 /** @deprecated 請改從 configs/constant 引入 INCOME_TYPES */
