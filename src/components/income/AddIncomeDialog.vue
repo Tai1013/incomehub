@@ -308,6 +308,11 @@ watch(
 </script>
 
 <style scoped lang="scss">
+:deep(.el-dialog__body) {
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+
 :deep(.field-control.el-date-editor.el-input) {
   width: 100%;
 }

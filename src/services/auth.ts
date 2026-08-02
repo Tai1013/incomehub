@@ -37,3 +37,17 @@ export const signOut = async () => {
     throw error
   }
 }
+
+export const changePassword = async (email: string, oldPassword: string, newPassword: string) => {
+  const { error: verifyError } = await supabase.auth.signInWithPassword({ email, password: oldPassword })
+
+  if (verifyError) {
+    throw new Error('舊密碼不正確')
+  }
+
+  const { error } = await supabase.auth.updateUser({ password: newPassword })
+
+  if (error) {
+    throw error
+  }
+}
