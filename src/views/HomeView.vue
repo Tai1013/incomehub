@@ -1,12 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import YearBarChart from '../components/income/charts/YearBarChart.vue'
 import YearPieChart from '../components/income/charts/YearPieChart.vue'
 import TypeTrendChart from '../components/income/charts/TypeTrendChart.vue'
 
-const router = useRouter()
 const authStore = useAuthStore()
 
 const userName = computed(() => {
@@ -14,26 +12,14 @@ const userName = computed(() => {
   if (!email) return '未登入'
   return email.split('@')[0]
 })
-
-const goTo = (path: '/list' | '/data') => {
-  router.push(path)
-}
 </script>
 
 <template>
   <div style="display: flex; flex-direction: column; gap: 12px;">
-    <section class="panel brand-panel">
-      <p class="eyebrow">incomehub</p>
-      <h1 style="margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">歡迎回來 {{ userName }}</h1>
+    <section class="welcome-card">
+      <p class="welcome-brand">incomehub</p>
+      <h1 class="welcome-title">歡迎回來，{{ userName }}</h1>
     </section>
-    <section class="panel">
-      <h2>快速前往</h2>
-      <el-space>
-        <el-button type="primary" @click="goTo('/list')">收入列表</el-button>
-        <el-button type="success" @click="goTo('/data')">數據分析</el-button>
-      </el-space>
-    </section>
-
     <YearBarChart />
     <TypeTrendChart />
     <YearPieChart />
@@ -43,5 +29,32 @@ const goTo = (path: '/list' | '/data') => {
 <style scoped lang="scss">
 :deep(.el-card) {
   border-radius: 14px;
+}
+
+.welcome-card {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 16px;
+  padding: 16px 18px;
+}
+
+.welcome-brand {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #f59e0b;
+}
+
+.welcome-title {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #1c1917;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>

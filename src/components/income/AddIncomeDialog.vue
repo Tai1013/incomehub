@@ -88,7 +88,7 @@
         </el-form-item>
       </el-form>
 
-      <el-space class="action-buttons" fill>
+      <el-space class="action-buttons" :class="{ 'is-editing': isEditing }">
         <el-button type="primary" class="submit-button" @click="submitIncome()">{{ submitButtonText }}</el-button>
         <el-button v-if="!isEditing" class="submit-button" @click="submitIncome(true)">連續新增</el-button>
       </el-space>
@@ -215,6 +215,8 @@ const applyEntryToForm = (entry: IncomeEntry) => {
 }
 
 const resetForContinuousEntry = () => {
+  formModel.type = INCOME_TYPES[0] as IncomeType
+  formModel.description = ''
   clearAmount()
   nextTick(() => {
     formRef.value?.clearValidate()
@@ -321,7 +323,7 @@ watch(
   width: 100%;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  gap: 6px;
 }
 
 .type-tile {
@@ -330,9 +332,9 @@ watch(
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  min-height: 76px;
-  padding: 10px 6px;
+  gap: 4px;
+  min-height: 64px;
+  padding: 8px 4px;
   border: 1px solid var(--el-border-color);
   border-radius: 10px;
   background: var(--el-fill-color-blank);
@@ -402,9 +404,15 @@ watch(
 
 .action-buttons {
   width: 100%;
+
+  :deep(.el-space__item) {
+    width: calc(50% - 4px);
+  }
 }
 
-.submit-button {
-  width: 100%;
+.action-buttons.is-editing {
+  :deep(.el-space__item) {
+    width: 100%;
+  }
 }
 </style>

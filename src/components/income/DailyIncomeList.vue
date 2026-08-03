@@ -1,8 +1,4 @@
 <template>
-  <div style="display: flex; justify-content: flex-end; margin-bottom: 12px;">
-    <el-tag round effect="light" size="small" type="info">記錄天數 {{ dailyLists.length }}</el-tag>
-  </div>
-
   <el-empty v-if="dailyLists.length === 0" description="目前沒有收入紀錄" />
 
   <div v-else style="display: grid; gap: 10px; width: 100%;">
@@ -28,7 +24,7 @@
         </div>
 
         <div style="display: inline-flex; align-items: center; gap: 8px;">
-          <strong style="color: var(--el-color-primary-dark-2);">{{ formatCurrency(yearGroup.total) }}</strong>
+          <strong :style="{ color: getYearHeaderAmountColor(yearGroup) }">{{ formatCurrency(getYearHeaderAmount(yearGroup)) }}</strong>
           <el-icon aria-hidden="true">
             <component :is="isYearCollapsed(yearGroup.year) ? ArrowDown : ArrowUp" />
           </el-icon>
@@ -36,55 +32,69 @@
       </header>
 
       <div v-if="!isYearCollapsed(yearGroup.year)" style="display: grid; gap: 8px; margin-top: 8px; width: 100%;">
-        <el-card
-          v-for="day in yearGroup.days"
-          :key="day.date"
-          shadow="never"
-          style="width: 100%; border-radius: 14px;"
-          :body-style="{ padding: '8px 10px' }"
+        <section
+          v-for="monthGroup in yearGroup.months"
+          :key="`${yearGroup.year}-${monthGroup.month}`"
+          style="width: 100%; padding: 8px 2px 2px;"
         >
-          <header style="display: flex; align-items: center; justify-content: space-between; min-height: 24px;">
-            <el-tag type="info" effect="plain" round>{{ day.shortDate }}</el-tag>
-            <strong>{{ formatCurrency(day.total) }}</strong>
+          <header style="display: flex; align-items: center; justify-content: space-between; min-height: 24px; margin-bottom: 8px;">
+            <el-tag type="info" effect="light" round>{{ monthGroup.monthLabel }}</el-tag>
+            <strong :style="{ color: getProgressColor(monthGroup.total, monthlyTargetValue) }">{{ formatCurrency(monthGroup.total) }}</strong>
           </header>
+          <el-divider style="margin: 0 0 10px;" />
 
-          <div style="margin-top: 8px; width: 100%;">
-            <template v-for="(item, index) in day.items" :key="item.id">
-              <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 34px; width: 100%;">
-                <div style="display: grid; gap: 6px; min-width: 0; flex: 1;">
-                  <el-tag size="small" type="success" effect="light" style="width: fit-content;">{{ item.type }}</el-tag>
-                </div>
-                <div style="display: inline-flex; align-items: center; gap: 10px;">
-                  <strong>{{ formatCurrency(item.amount) }}</strong>
-                  <div>
-                    <el-button
-                      circle
-                      plain
-                      :icon="EditPen"
-                      aria-label="編輯金額"
-                      @click="editItem(item)"
-                    />
-                    <el-button
-                      circle
-                      plain
-                      type="danger"
-                      :icon="Delete"
-                      aria-label="刪除細項"
-                      @click="deleteItem(day.date, item.id)"
-                    />
+          <div style="display: grid; gap: 8px; width: 100%;">
+            <el-card
+              v-for="day in monthGroup.days"
+              :key="day.date"
+              shadow="never"
+              style="width: 100%; border-radius: 12px; background: var(--el-fill-color-lighter);"
+              :body-style="{ padding: '8px 10px' }"
+            >
+              <header style="display: flex; align-items: center; justify-content: space-between; min-height: 24px;">
+                <el-tag type="info" effect="plain" round>{{ day.shortDate }}</el-tag>
+                <!-- <strong>{{ formatCurrency(day.total) }}</strong> -->
+              </header>
+
+              <div style="margin-top: 8px; width: 100%;">
+                <template v-for="(item, index) in day.items" :key="item.id">
+                  <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 34px; width: 100%;">
+                    <div style="display: grid; gap: 6px; min-width: 0; flex: 1;">
+                      <el-tag size="small" type="success" effect="light" style="width: fit-content;">{{ item.type }}</el-tag>
+                    </div>
+                    <div style="display: inline-flex; align-items: center; gap: 10px;">
+                      <strong>{{ formatCurrency(item.amount) }}</strong>
+                      <div v-if="editMode">
+                        <el-button
+                          circle
+                          plain
+                          :icon="EditPen"
+                          aria-label="編輯金額"
+                          @click="editItem(item)"
+                        />
+                        <el-button
+                          circle
+                          plain
+                          type="danger"
+                          :icon="Delete"
+                          aria-label="刪除細項"
+                          @click="deleteItem(day.date, item.id)"
+                        />
+                      </div>
+                    </div>
                   </div>
-                </div>
+                  <span
+                    v-if="item.description"
+                    style="display: block; font-size: 12px; line-height: 1.45; color: var(--el-text-color-secondary); word-break: break-word; border: 1px solid var(--el-border-color-lighter); border-radius: 8px; padding: 4px 8px; margin-top: 4px;"
+                  >
+                    {{ item.description }}
+                  </span>
+                  <el-divider v-if="index < day.items.length - 1" style="margin: 6px 0; width: 100%;" />
+                </template>
               </div>
-              <span
-                v-if="item.description"
-                style="display: block; font-size: 12px; line-height: 1.45; color: var(--el-text-color-secondary); word-break: break-word; border: 1px solid var(--el-border-color-lighter); border-radius: 8px; padding: 4px 8px; margin-top: 4px;"
-              >
-                {{ item.description }}
-              </span>
-              <el-divider v-if="index < day.items.length - 1" style="margin: 6px 0; width: 100%;" />
-            </template>
+            </el-card>
           </div>
-        </el-card>
+        </section>
       </div>
     </el-card>
   </div>
@@ -96,12 +106,44 @@ import dayjs from 'dayjs'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowDown, ArrowUp, Delete, EditPen } from '@element-plus/icons-vue'
 import { useIncomeEntries } from '../../composables/useIncomeEntries'
+import { useAuthStore } from '../../stores/auth'
 import { useIncomeStore } from '../../stores/income'
 import type { IncomeEntry } from '../../types/income'
 
+defineProps<{
+  editMode?: boolean
+}>()
+
 const { dailyLists, removeEntry } = useIncomeEntries()
+const authStore = useAuthStore()
 const incomeStore = useIncomeStore()
-const collapsedYears = ref<Record<string, boolean>>({})
+const expandedYears = ref<Record<string, boolean>>({})
+const currentYear = dayjs().format('YYYY')
+const currentMonth = dayjs().format('MM')
+
+const yearlyTargetValue = computed(() =>
+  authStore.yearlyTarget && authStore.yearlyTarget > 0 ? authStore.yearlyTarget : null
+)
+
+const monthlyTargetValue = computed(() =>
+  authStore.monthlyTarget && authStore.monthlyTarget > 0 ? authStore.monthlyTarget : null
+)
+
+type YearDayGroup = {
+  date: string
+  month: string
+  shortDate: string
+  total: number
+  items: IncomeEntry[]
+}
+
+type MonthGroup = {
+  month: string
+  monthLabel: string
+  total: number
+  rowCount: number
+  days: YearDayGroup[]
+}
 
 const yearGroups = computed(() => {
   const grouped = new Map<
@@ -109,24 +151,29 @@ const yearGroups = computed(() => {
     {
       year: string
       total: number
+      monthTotal: number
       rowCount: number
-      days: Array<{ date: string; shortDate: string; total: number; items: IncomeEntry[] }>
+        days: YearDayGroup[]
     }
   >()
 
   for (const dayGroup of dailyLists.value) {
-    const year = dayGroup.date.slice(0, 4)
+    const year = dayjs(dayGroup.date).format('YYYY')
+    const month = dayjs(dayGroup.date).format('MM')
     const dayTotal = dayGroup.items.reduce((sum, item) => sum + item.amount, 0)
+    const monthContribution = month === currentMonth ? dayTotal : 0
 
     const existing = grouped.get(year)
     if (!existing) {
       grouped.set(year, {
         year,
         total: dayTotal,
+        monthTotal: monthContribution,
         rowCount: dayGroup.items.length,
         days: [
           {
             date: dayGroup.date,
+            month,
             shortDate: dayjs(dayGroup.date).format('MM-DD'),
             total: dayTotal,
             items: dayGroup.items,
@@ -137,16 +184,55 @@ const yearGroups = computed(() => {
     }
 
     existing.total += dayTotal
+    existing.monthTotal += monthContribution
     existing.rowCount += dayGroup.items.length
     existing.days.push({
       date: dayGroup.date,
+      month,
       shortDate: dayjs(dayGroup.date).format('MM-DD'),
       total: dayTotal,
       items: dayGroup.items,
     })
   }
 
-  return Array.from(grouped.values()).sort((a, b) => b.year.localeCompare(a.year))
+  return Array.from(grouped.values())
+    .map((yearGroup) => {
+      const monthsMap = new Map<string, MonthGroup>()
+
+      for (const day of yearGroup.days) {
+        const existingMonth = monthsMap.get(day.month)
+        if (!existingMonth) {
+          monthsMap.set(day.month, {
+            month: day.month,
+            monthLabel: `${day.month}月`,
+            total: day.total,
+            rowCount: day.items.length,
+            days: [day],
+          })
+          continue
+        }
+
+        existingMonth.total += day.total
+        existingMonth.rowCount += day.items.length
+        existingMonth.days.push(day)
+      }
+
+      const months = Array.from(monthsMap.values())
+        .sort((a, b) => b.month.localeCompare(a.month))
+        .map((monthGroup) => ({
+          ...monthGroup,
+          days: monthGroup.days.sort((a, b) => b.date.localeCompare(a.date)),
+        }))
+
+      return {
+        year: yearGroup.year,
+        total: yearGroup.total,
+        monthTotal: yearGroup.monthTotal,
+        rowCount: yearGroup.rowCount,
+        months,
+      }
+    })
+    .sort((a, b) => b.year.localeCompare(a.year))
 })
 
 const deleteItem = async (date: string, id: string) => {
@@ -180,10 +266,51 @@ const editItem = (entry: IncomeEntry) => {
 }
 
 const toggleYear = (year: string) => {
-  collapsedYears.value[year] = !collapsedYears.value[year]
+  expandedYears.value[year] = !expandedYears.value[year]
 }
 
-const isYearCollapsed = (year: string) => Boolean(collapsedYears.value[year])
+const isYearCollapsed = (year: string) => !expandedYears.value[year]
+
+const getProgressColor = (total: number, target: number | null) => {
+  if (!target) {
+    return 'var(--el-text-color-primary)'
+  }
+
+  const progress = total / target
+  if (progress >= 1) {
+    return 'var(--el-color-success)'
+  }
+
+  if (progress >= 0.8) {
+    return 'var(--el-color-warning)'
+  }
+
+  return 'var(--el-text-color-primary)'
+}
+
+const getYearHeaderAmount = (yearGroup: { year: string; total: number; monthTotal: number }) => {
+  if (yearlyTargetValue.value) {
+    return yearGroup.total
+  }
+
+  if (monthlyTargetValue.value && yearGroup.year === currentYear) {
+    return yearGroup.monthTotal
+  }
+
+  return yearGroup.total
+}
+
+const getYearHeaderAmountColor = (yearGroup: { year: string; total: number; monthTotal: number }) => {
+  if (yearlyTargetValue.value) {
+    return getProgressColor(yearGroup.total, yearlyTargetValue.value)
+  }
+
+  if (monthlyTargetValue.value && yearGroup.year === currentYear) {
+    return getProgressColor(yearGroup.monthTotal, monthlyTargetValue.value)
+  }
+
+  return getProgressColor(yearGroup.total, null)
+}
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('zh-TW', {

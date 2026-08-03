@@ -4,6 +4,7 @@ import { ElMessage } from 'element-plus'
 import { DataAnalysis, HomeFilled, List, Setting, SwitchButton } from '@element-plus/icons-vue'
 import { useRoute, useRouter, RouterView } from 'vue-router'
 import AppHeader from '../components/layout/AppHeader.vue'
+import BottomNav from '../components/layout/BottomNav.vue'
 import AddIncomeDialog from '../components/income/AddIncomeDialog.vue'
 import { useIncomeStore } from '../stores/income'
 import { useAuthStore } from '../stores/auth'
@@ -75,6 +76,8 @@ const handleMenuSelect = (index: string) => {
       <section class="main-content">
         <RouterView />
       </section>
+
+      <BottomNav />
     </section>
 
     <el-drawer v-model="drawerVisible" direction="ltr" size="280px" :with-header="false">
@@ -138,10 +141,11 @@ const handleMenuSelect = (index: string) => {
 
 .main-content {
   flex: 1;
-  padding: 10px 10px 18px;
+  padding: 10px 10px 10px;
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 50%, #fed7aa 100%);
 }
 
 .drawer-content {

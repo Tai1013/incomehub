@@ -11,6 +11,8 @@ export const useAuthStore = defineStore('auth', () => {
   const roleStatus = ref<'idle' | 'loaded' | 'missing' | 'error'>('idle')
   const ready = ref(false)
   const loading = ref(false)
+  const yearlyTarget = ref<number | null>(null)
+  const monthlyTarget = ref<number | null>(null)
   let initialized = false
   let roleRequestUserId: string | null = null
 
@@ -32,7 +34,7 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, yearly_target, monthly_target')
         .eq('id', userId)
         .maybeSingle()
 
@@ -50,6 +52,8 @@ export const useAuthStore = defineStore('auth', () => {
       }
 
       role.value = normalizeRole(data.role)
+      yearlyTarget.value = data.yearly_target ?? null
+      monthlyTarget.value = data.monthly_target ?? null
       roleStatus.value = 'loaded'
     } finally {
       unLoad()
@@ -135,10 +139,29 @@ export const useAuthStore = defineStore('auth', () => {
       role.value = normalizeRole(null)
       roleStatus.value = 'idle'
       roleRequestUserId = null
+      yearlyTarget.value = null
+      monthlyTarget.value = null
     } finally {
       loading.value = false
       unLoad()
     }
+  }
+
+  const updateTargets = async (yearly: number | null, monthly: number | null) => {
+    const userId = user.value?.id
+    if (!userId) return
+
+    const { error } = await supabase
+      .from('profiles')
+      .upsert(
+        { id: userId, yearly_target: yearly, monthly_target: monthly },
+        { onConflict: 'id' }
+      )
+
+    if (error) throw error
+
+    yearlyTarget.value = yearly
+    monthlyTarget.value = monthly
   }
 
   return {
@@ -147,9 +170,12 @@ export const useAuthStore = defineStore('auth', () => {
     roleStatus,
     ready,
     loading,
+    yearlyTarget,
+    monthlyTarget,
     initAuth,
     signUpWithEmail,
     signInWithEmail,
     signOut,
+    updateTargets,
   }
 })
