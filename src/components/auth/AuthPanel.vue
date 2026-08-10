@@ -115,6 +115,7 @@ onMounted(() => {
       <el-form label-position="top">
         <el-form-item label="Email">
           <el-autocomplete
+            class="auth-field"
             v-model="form.email"
             :fetch-suggestions="queryEmailHistory"
             trigger-on-focus
@@ -127,6 +128,7 @@ onMounted(() => {
 
         <el-form-item label="密碼">
           <el-input
+            class="auth-field"
             v-model="form.password"
             type="password"
             show-password
@@ -175,5 +177,19 @@ onMounted(() => {
   box-shadow: 0 22px 38px rgba(15, 23, 42, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.62);
   backdrop-filter: blur(20px) saturate(165%);
   -webkit-backdrop-filter: blur(20px) saturate(165%);
+}
+
+:deep(.auth-field .el-input__wrapper) {
+  border: 1px solid rgba(51, 65, 85, 0.28);
+  box-shadow: 0 0 0 1px rgba(51, 65, 85, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.66);
+}
+
+:deep(.auth-field .el-input__wrapper:hover) {
+  border-color: rgba(30, 41, 59, 0.4);
+}
+
+:deep(.auth-field .el-input__wrapper.is-focus) {
+  border-color: var(--el-color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--el-color-primary) 24%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 </style>
