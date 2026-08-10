@@ -11,7 +11,7 @@
 
     <button class="nav-item nav-center" @click="router.push('/home')">
       <div class="hub-btn" :class="{ active: route.path === '/home' }">
-        <img src="/hub-icon.svg" alt="IncomeHub" />
+        <img :src="hubIconSrc" alt="IncomeHub" />
       </div>
     </button>
 
@@ -29,6 +29,7 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router'
 import { List, DataAnalysis } from '@element-plus/icons-vue'
+import hubIconSrc from '../../assets/hub-icon.svg'
 
 const route = useRoute()
 const router = useRouter()
@@ -95,27 +96,25 @@ const router = useRouter()
   aspect-ratio: 1 / 1;
   flex-shrink: 0;
   border-radius: 50%;
-  background:
-    radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.88) 0%, rgba(255, 255, 255, 0.22) 48%),
-    linear-gradient(140deg, rgba(238, 246, 255, 0.95) 0%, rgba(196, 226, 255, 0.78) 100%);
+  background: linear-gradient(140deg, #0ea5a4 0%, #0b6e65 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 15px 28px rgba(59, 130, 246, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.76);
+  box-shadow: 0 12px 22px rgba(11, 110, 101, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.34);
   transition: transform 0.15s, box-shadow 0.15s;
   margin-top: -16px;
-  border: 1px solid rgba(255, 255, 255, 0.82);
-  padding: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.46);
+  padding: 0;
 
   img {
     border-radius: 50%;
     display: block;
-    width: 39px;
-    height: 39px;
+    width: 56px;
+    height: 56px;
   }
 
   &.active {
-    box-shadow: 0 18px 30px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.86);
+    box-shadow: 0 14px 25px rgba(11, 110, 101, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.4);
     transform: scale(1.06);
   }
 
