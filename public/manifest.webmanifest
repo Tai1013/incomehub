@@ -2,26 +2,27 @@
   "name": "IncomeHub",
   "short_name": "IncomeHub",
   "description": "Track and analyze your income data.",
-  "start_url": "/",
-  "scope": "/",
+  "id": "/incomehub/",
+  "start_url": "/incomehub/",
+  "scope": "/incomehub/",
   "display": "standalone",
   "background_color": "#0b1220",
   "theme_color": "#111827",
   "icons": [
     {
-      "src": "/icons/icon-192.png",
+      "src": "icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-512-maskable.png",
+      "src": "icons/icon-512-maskable.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
