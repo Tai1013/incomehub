@@ -3,7 +3,7 @@
   "short_name": "IncomeHub",
   "description": "Track and analyze your income data.",
   "id": "/incomehub/",
-  "start_url": "/incomehub/",
+  "start_url": "/incomehub/#/",
   "scope": "/incomehub/",
   "display": "standalone",
   "background_color": "#0b1220",
