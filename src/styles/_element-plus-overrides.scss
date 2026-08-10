@@ -1,0 +1,69 @@
+.el-card,
+.el-dialog,
+.el-drawer {
+  background: var(--glass-tint-strong);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow), var(--glass-highlight);
+  backdrop-filter: blur(var(--glass-blur)) saturate(175%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(175%);
+  border-radius: 16px;
+}
+
+.el-card {
+  border-radius: 16px;
+  --el-card-border-color: rgba(107, 114, 128, 0.3);
+}
+
+.el-card__header,
+.el-dialog__header,
+.el-drawer__header,
+.el-menu-item,
+.el-sub-menu__title {
+  border-color: var(--glass-border-soft);
+}
+
+.el-card__header {
+  border-bottom-color: var(--el-card-border-color);
+}
+
+.el-overlay,
+.el-overlay-dialog {
+  background: rgba(23, 34, 54, 0.2) !important;
+  backdrop-filter: blur(3px);
+}
+
+.el-menu {
+  background: transparent;
+  border-right: 0;
+}
+
+.el-menu-item:hover,
+.el-menu-item.is-active {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.el-input__wrapper,
+.el-textarea__inner,
+.el-select__wrapper,
+.el-date-editor.el-input__wrapper,
+.el-input-number {
+  background: rgba(255, 255, 255, 0.64);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+  border-radius: 16px;
+}
+
+.el-button {
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.34);
+}
+
+.el-button:not(.is-circle),
+.el-tag,
+.el-alert,
+.el-message,
+.el-popover,
+.el-dropdown-menu,
+.el-menu,
+.el-menu-item,
+.el-sub-menu__title {
+  border-radius: 16px;
+}

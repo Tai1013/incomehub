@@ -1,6 +1,6 @@
 <template>
   <section class="panel">
-    <div class="panel-header">
+    <div v-if="!hideHeader" class="panel-header">
       <div class="panel-title-wrap">
         <h2 class="panel-title">{{ title }}</h2>
         <el-tag v-if="tag" size="small" effect="light">{{ tag }}</el-tag>
@@ -15,8 +15,9 @@
 
 <script setup lang="ts">
 defineProps<{
-  title: string
+  title?: string
   tag?: string
+  hideHeader?: boolean
 }>()
 </script>
 

@@ -40,9 +40,14 @@ const router = useRouter()
   align-items: center;
   justify-content: space-around;
   height: 52px;
-  background: var(--el-bg-color);
-  border-top: 1px solid var(--el-border-color-lighter);
-  box-shadow: 0 -2px 12px rgba(15, 23, 42, 0.06);
+  margin: 0;
+  padding: 0 8px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0.5) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-top-color: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 -2px 0 rgba(255, 255, 255, 0.56) inset, 0 14px 30px rgba(15, 23, 42, 0.16);
+  backdrop-filter: blur(20px) saturate(185%);
+  -webkit-backdrop-filter: blur(20px) saturate(185%);
   flex-shrink: 0;
   padding-bottom: env(safe-area-inset-bottom, 0);
 }
@@ -59,7 +64,8 @@ const router = useRouter()
   border: none;
   cursor: pointer;
   color: var(--el-text-color-secondary);
-  transition: color 0.2s;
+  border-radius: 14px;
+  transition: color 0.2s ease, background-color 0.2s ease;
   padding: 0;
 
   &.active {
@@ -76,32 +82,40 @@ const router = useRouter()
 .nav-center {
   flex: 1.2;
   position: relative;
-  gap: 2px;
-}
-
-.hub-btn {
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #c084fc 0%, #818cf8 50%, #38bdf8 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
+  gap: 2px;
+  overflow: visible;
+}
+
+.hub-btn {
+  width: 56px;
+  height: 56px;
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.88) 0%, rgba(255, 255, 255, 0.22) 48%),
+    linear-gradient(140deg, rgba(238, 246, 255, 0.95) 0%, rgba(196, 226, 255, 0.78) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 15px 28px rgba(59, 130, 246, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.76);
   transition: transform 0.15s, box-shadow 0.15s;
-  margin-top: -20px;
-  border: 4px solid white;
+  margin-top: -16px;
+  border: 1px solid rgba(255, 255, 255, 0.82);
   padding: 2px;
 
   img {
     border-radius: 50%;
     display: block;
-    width: 36px;
-    height: 36px;
+    width: 39px;
+    height: 39px;
   }
 
   &.active {
-    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.55);
+    box-shadow: 0 18px 30px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.86);
     transform: scale(1.06);
   }
 

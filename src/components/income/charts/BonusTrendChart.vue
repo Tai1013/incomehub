@@ -4,38 +4,56 @@
       <div class="chart-header">
         <span>分類收入趨勢</span>
         <div class="chart-header-tags">
-          <el-select
-            v-model="selectedType"
-            size="small"
-            style="width: 120px;"
-            :teleported="true"
-            popper-class="bonus-type-popper"
-          >
-            <template #prefix>
-              <el-icon v-if="selectedOption?.icon" style="vertical-align: middle;">
-                <component :is="selectedOption.icon" />
-              </el-icon>
-            </template>
-            <el-option v-for="o in INCOME_TYPE_OPTIONS" :key="o.value" :label="o.label" :value="o.value">
-              <el-icon v-if="o.icon" style="margin-right: 4px; vertical-align: middle;"><component :is="o.icon" /></el-icon>
-              <span>{{ o.label }}</span>
-            </el-option>
-          </el-select>
-          <el-tag type="info" size="small">{{ yearRange }}</el-tag>
-          <el-tag size="small">今年累計 {{ thisYearTotal }}</el-tag>
+          <el-tag type="info" size="small" style="cursor: pointer;" @click="openFilterDialog">
+            {{ selectedTypeLabel }} | {{ yearRange }}
+          </el-tag>
+          <el-tag size="small">區間末年累計 {{ endYearTotal }}</el-tag>
         </div>
       </div>
     </template>
     <div v-if="hasData">
       <Line :data="chartData" :options="chartOptions" />
     </div>
-    <el-empty v-else :description="`近兩年尚無「${selectedType}」資料`" :image-size="80" />
+    <el-empty v-else :description="`${yearRange} 尚無「${selectedType}」資料`" :image-size="80" />
+
+    <el-dialog v-model="filterDialogVisible" title="篩選條件" width="320px" align-center :lock-scroll="true">
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <el-select v-model="draftType" placeholder="分類" style="width: 100%;">
+          <el-option v-for="o in INCOME_TYPE_OPTIONS" :key="o.value" :label="o.label" :value="o.value" />
+        </el-select>
+
+        <el-row :gutter="10">
+          <el-col :span="12">
+            <el-select v-model="draftStartYear" placeholder="起始年" style="width: 100%;">
+              <el-option v-for="year in yearOptions" :key="`start-${year}`" :label="`${year}年`" :value="year" />
+            </el-select>
+          </el-col>
+          <el-col :span="12">
+            <el-select v-model="draftEndYear" placeholder="結束年" style="width: 100%;">
+              <el-option v-for="year in yearOptions" :key="`end-${year}`" :label="`${year}年`" :value="year" />
+            </el-select>
+          </el-col>
+        </el-row>
+      </div>
+
+      <template #footer>
+        <el-row :gutter="10">
+          <el-col :span="12">
+            <el-button type="danger" plain style="width: 100%;" @click="resetDraftFilter">重置</el-button>
+          </el-col>
+          <el-col :span="12">
+            <el-button type="primary" style="width: 100%;" @click="applyFilter">確定</el-button>
+          </el-col>
+        </el-row>
+      </template>
+    </el-dialog>
   </el-card>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import dayjs from 'dayjs'
+import { ElMessage } from 'element-plus'
 import { Line } from 'vue-chartjs'
 import {
   Chart as ChartJS, CategoryScale, LinearScale,
@@ -52,15 +70,58 @@ const store = useIncomeStore()
 const { formatShort } = useChartFormat()
 
 const selectedType = ref<IncomeType>('月獎金')
-const selectedOption = computed(() => INCOME_TYPE_OPTIONS.find(o => o.value === selectedType.value))
+const selectedTypeLabel = computed(() => INCOME_TYPE_OPTIONS.find(o => o.value === selectedType.value)?.label ?? selectedType.value)
 
-const thisYear = dayjs().format('YYYY')
-const lastYear = dayjs().subtract(1, 'year').format('YYYY')
-const yearRange = `${lastYear} – ${thisYear}`
+const currentYear = dayjs().year()
+const defaultStartYear = currentYear - 1
+const defaultEndYear = currentYear
+
+const startYear = ref(defaultStartYear)
+const endYear = ref(defaultEndYear)
+
+const filterDialogVisible = ref(false)
+const draftType = ref<IncomeType>(selectedType.value)
+const draftStartYear = ref(defaultStartYear)
+const draftEndYear = ref(defaultEndYear)
+
+const yearOptions = computed(() => {
+  const years = new Set<number>([currentYear, currentYear - 1])
+  store.dailyLists.forEach((d) => years.add(dayjs(d.date).year()))
+  return Array.from(years).sort((a, b) => b - a)
+})
+
+const yearRange = computed(() => `${startYear.value} - ${endYear.value}`)
+
+const openFilterDialog = () => {
+  draftType.value = selectedType.value
+  draftStartYear.value = startYear.value
+  draftEndYear.value = endYear.value
+  filterDialogVisible.value = true
+}
+
+const resetDraftFilter = () => {
+  draftType.value = '月獎金'
+  draftStartYear.value = defaultStartYear
+  draftEndYear.value = defaultEndYear
+}
+
+const applyFilter = () => {
+  if (!draftType.value || draftStartYear.value == null || draftEndYear.value == null) {
+    ElMessage.warning('分類與起訖年份皆為必填')
+    return
+  }
+
+  const start = Math.min(draftStartYear.value, draftEndYear.value)
+  const end = Math.max(draftStartYear.value, draftEndYear.value)
+  selectedType.value = draftType.value
+  startYear.value = start
+  endYear.value = end
+  filterDialogVisible.value = false
+}
 
 const MONTH_LABELS = Array.from({ length: 12 }, (_, i) => `${i + 1}月`)
 
-const amountForMonth = (year: string, monthIdx: number): number => {
+const amountForMonth = (year: number, monthIdx: number): number => {
   const monthStr = `${year}-${String(monthIdx + 1).padStart(2, '0')}`
   return store.dailyLists
     .filter(d => d.date.startsWith(monthStr))
@@ -69,20 +130,20 @@ const amountForMonth = (year: string, monthIdx: number): number => {
     .reduce((s, e) => s + e.amount, 0)
 }
 
-const thisYearData = computed(() => MONTH_LABELS.map((_, i) => amountForMonth(thisYear, i)))
-const lastYearData = computed(() => MONTH_LABELS.map((_, i) => amountForMonth(lastYear, i)))
+const endYearData = computed(() => MONTH_LABELS.map((_, i) => amountForMonth(endYear.value, i)))
+const startYearData = computed(() => MONTH_LABELS.map((_, i) => amountForMonth(startYear.value, i)))
 
 const hasData = computed(() =>
-  thisYearData.value.some(v => v > 0) || lastYearData.value.some(v => v > 0)
+  endYearData.value.some(v => v > 0) || startYearData.value.some(v => v > 0)
 )
 
-const thisYearTotal = computed(() => {
-  const total = thisYearData.value.reduce((s, v) => s + v, 0)
+const endYearTotal = computed(() => {
+  const total = endYearData.value.reduce((s, v) => s + v, 0)
   return `$${total.toLocaleString()}`
 })
 
 const suggestedMax = computed(() => {
-  const allValues = [...thisYearData.value, ...lastYearData.value].filter(v => v > 0)
+  const allValues = [...endYearData.value, ...startYearData.value].filter(v => v > 0)
   if (allValues.length === 0) return 10000
   return Math.ceil(Math.max(...allValues) * 1.2 / 1000) * 1000
 })
@@ -91,25 +152,25 @@ const chartData = computed(() => ({
   labels: MONTH_LABELS,
   datasets: [
     {
-      label: `${thisYear}年`,
-      data: thisYearData.value,
+      label: `${endYear.value}年`,
+      data: endYearData.value,
       borderColor: '#f59e0b',
       backgroundColor: 'rgba(245,158,11,0.1)',
       borderWidth: 2.5,
-      pointBackgroundColor: thisYearData.value.map(v => v > 0 ? '#f59e0b' : 'transparent'),
-      pointRadius: thisYearData.value.map(v => v > 0 ? 4 : 0),
+      pointBackgroundColor: endYearData.value.map(v => v > 0 ? '#f59e0b' : 'transparent'),
+      pointRadius: endYearData.value.map(v => v > 0 ? 4 : 0),
       tension: 0.3,
       fill: false,
     },
     {
-      label: `${lastYear}年`,
-      data: lastYearData.value,
+      label: `${startYear.value}年`,
+      data: startYearData.value,
       borderColor: '#3b82f6',
       backgroundColor: 'rgba(59,130,246,0.1)',
       borderWidth: 2.5,
       borderDash: [5, 4],
-      pointBackgroundColor: lastYearData.value.map(v => v > 0 ? '#3b82f6' : 'transparent'),
-      pointRadius: lastYearData.value.map(v => v > 0 ? 4 : 0),
+      pointBackgroundColor: startYearData.value.map(v => v > 0 ? '#3b82f6' : 'transparent'),
+      pointRadius: startYearData.value.map(v => v > 0 ? 4 : 0),
       tension: 0.3,
       fill: false,
     },
@@ -118,6 +179,7 @@ const chartData = computed(() => ({
 
 const chartOptions = computed(() => ({
   responsive: true,
+  aspectRatio: 1.45,
   spanGaps: false,
   plugins: {
     legend: { position: 'bottom' as const },

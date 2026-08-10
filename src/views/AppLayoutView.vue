@@ -125,7 +125,7 @@ const handleMenuSelect = (index: string) => {
   justify-content: center;
   align-items: stretch;
   padding: 0;
-  background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+  background: transparent;
 }
 
 .app-phone-shell {
@@ -134,9 +134,16 @@ const handleMenuSelect = (index: string) => {
   width: 100%;
   max-width: 430px;
   height: 100dvh;
-  background: var(--el-bg-color);
+  background:
+    radial-gradient(circle at 84% 10%, rgba(147, 197, 253, 0.26) 0 16%, transparent 50%),
+    radial-gradient(circle at 18% 86%, rgba(251, 191, 36, 0.18) 0 14%, transparent 45%),
+    rgba(255, 255, 255, 0.42);
+  border-left: 1px solid rgba(255, 255, 255, 0.5);
+  border-right: 1px solid rgba(255, 255, 255, 0.5);
   font-family: var(--el-font-family);
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  box-shadow: 0 24px 56px rgba(15, 23, 42, 0.18);
 }
 
 .main-content {
@@ -145,7 +152,7 @@ const handleMenuSelect = (index: string) => {
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 50%, #fed7aa 100%);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .drawer-content {
@@ -163,15 +170,16 @@ const handleMenuSelect = (index: string) => {
   margin: 0 20px 16px;
   padding: 14px 14px 12px;
   border-radius: 14px;
-  background: linear-gradient(180deg, #fff7ed 0%, #fffbf5 100%);
-  border: 1px solid var(--el-border-color);
+  background: rgba(255, 255, 255, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
 }
 
 .drawer-user-value {
   margin: 0;
   font-size: 0.96rem;
   font-weight: 600;
-  color: #9a3412;
+  color: #7c2d12;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -191,5 +199,14 @@ const handleMenuSelect = (index: string) => {
 
 :deep(.el-drawer__body) {
   padding: 0;
+}
+
+@media (min-width: 768px) {
+  .app-phone-shell {
+    margin: 10px 0;
+    border-radius: 24px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.62);
+  }
 }
 </style>

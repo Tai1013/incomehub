@@ -2,9 +2,9 @@
   <el-card shadow="never">
     <template #header>
       <div class="chart-header">
-        <span>當月分類佔比</span>
+        <span>月分類佔比</span>
         <div class="chart-header-tags">
-          <el-tag type="info" size="small">{{ currentMonthLabel }}</el-tag>
+          <el-tag type="info" size="small" style="cursor: pointer;" @click="openMonthDialog">{{ selectedMonthLabel }}</el-tag>
           <el-tag size="small">總計 {{ totalFormatted }}</el-tag>
         </div>
       </div>
@@ -13,12 +13,38 @@
       <PolarArea :data="chartData" :options="chartOptions" />
     </div>
     <el-empty v-else description="本月尚無收入資料" :image-size="80" />
+
+    <el-dialog v-model="monthDialogVisible" title="選擇月份" width="320px" align-center :lock-scroll="true">
+      <el-row :gutter="10">
+        <el-col :span="12">
+          <el-select v-model="draftYear" placeholder="年" style="width: 100%;">
+            <el-option v-for="year in yearOptions" :key="year" :label="`${year}年`" :value="year" />
+          </el-select>
+        </el-col>
+        <el-col :span="12">
+          <el-select v-model="draftMonth" placeholder="月" style="width: 100%;">
+            <el-option v-for="month in monthOptions" :key="month" :label="`${String(month).padStart(2, '0')}月`" :value="month" />
+          </el-select>
+        </el-col>
+      </el-row>
+      <template #footer>
+        <el-row :gutter="10">
+          <el-col :span="12">
+            <el-button type="danger" plain style="width: 100%;" @click="resetDraftMonth">重置</el-button>
+          </el-col>
+          <el-col :span="12">
+            <el-button type="primary" style="width: 100%;" @click="applyMonth">確定</el-button>
+          </el-col>
+        </el-row>
+      </template>
+    </el-dialog>
   </el-card>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import dayjs from 'dayjs'
+import { ElMessage } from 'element-plus'
 import { PolarArea } from 'vue-chartjs'
 import { Chart as ChartJS, ArcElement, RadialLinearScale, Tooltip, Legend } from 'chart.js'
 import { useIncomeStore } from '../../../stores/income'
@@ -30,14 +56,52 @@ ChartJS.register(ArcElement, RadialLinearScale, Tooltip, Legend)
 const store = useIncomeStore()
 const { formatShort } = useChartFormat()
 
-const currentMonth = dayjs().format('YYYY-MM')
-const currentMonthLabel = dayjs().format('YYYY年MM月')
+const currentDate = dayjs()
+const DEFAULT_YEAR = currentDate.year()
+const DEFAULT_MONTH = currentDate.month() + 1
+const DEFAULT_MONTH_KEY = currentDate.format('YYYY-MM')
+
+const selectedMonth = ref(DEFAULT_MONTH_KEY)
+const monthDialogVisible = ref(false)
+const draftYear = ref(DEFAULT_YEAR)
+const draftMonth = ref(DEFAULT_MONTH)
+
+const yearOptions = computed(() => {
+  const years = new Set<number>([DEFAULT_YEAR])
+  store.dailyLists.forEach((d) => years.add(dayjs(d.date).year()))
+  return Array.from(years).sort((a, b) => b - a)
+})
+
+const monthOptions = Array.from({ length: 12 }, (_, idx) => idx + 1)
+
+const selectedMonthLabel = computed(() => dayjs(`${selectedMonth.value}-01`).format('YYYY/MM'))
+
+const openMonthDialog = () => {
+  const parsed = dayjs(`${selectedMonth.value}-01`)
+  draftYear.value = parsed.year()
+  draftMonth.value = parsed.month() + 1
+  monthDialogVisible.value = true
+}
+
+const resetDraftMonth = () => {
+  draftYear.value = DEFAULT_YEAR
+  draftMonth.value = DEFAULT_MONTH
+}
+
+const applyMonth = () => {
+  if (draftYear.value == null || draftMonth.value == null) {
+    ElMessage.warning('年份與月份為必填')
+    return
+  }
+  selectedMonth.value = dayjs(`${draftYear.value}-${String(draftMonth.value).padStart(2, '0')}-01`).format('YYYY-MM')
+  monthDialogVisible.value = false
+}
 
 const COLORS = ['#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#8b5cf6', '#f97316']
 
 const monthEntries = computed(() =>
   store.dailyLists
-    .filter(d => d.date.startsWith(currentMonth))
+    .filter(d => d.date.startsWith(selectedMonth.value))
     .flatMap(d => d.items)
 )
 

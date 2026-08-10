@@ -38,26 +38,26 @@
           style="width: 100%; padding: 8px 2px 2px;"
         >
           <header style="display: flex; align-items: center; justify-content: space-between; min-height: 24px; margin-bottom: 8px;">
-            <el-tag type="info" effect="light" round>{{ monthGroup.monthLabel }}</el-tag>
+            <el-tag type="info" effect="light" round class="date-chip">{{ monthGroup.monthLabel }}</el-tag>
             <strong :style="{ color: getProgressColor(monthGroup.total, monthlyTargetValue) }">{{ formatCurrency(monthGroup.total) }}</strong>
           </header>
-          <el-divider style="margin: 0 0 10px;" />
 
           <div style="display: grid; gap: 8px; width: 100%;">
             <el-card
               v-for="day in monthGroup.days"
               :key="day.date"
               shadow="never"
-              style="width: 100%; border-radius: 12px; background: var(--el-fill-color-lighter);"
+              class="daily-recessed-card"
+              style="width: 100%; border-radius: 12px;"
               :body-style="{ padding: '8px 10px' }"
             >
               <header style="display: flex; align-items: center; justify-content: space-between; min-height: 24px;">
-                <el-tag type="info" effect="plain" round>{{ day.shortDate }}</el-tag>
+                <el-tag type="info" effect="light" round class="date-chip">{{ day.shortDate }}</el-tag>
                 <!-- <strong>{{ formatCurrency(day.total) }}</strong> -->
               </header>
 
               <div style="margin-top: 8px; width: 100%;">
-                <template v-for="(item, index) in day.items" :key="item.id">
+                <template v-for="item in day.items" :key="item.id">
                   <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 34px; width: 100%;">
                     <div style="display: grid; gap: 6px; min-width: 0; flex: 1;">
                       <el-tag size="small" type="success" effect="light" style="width: fit-content;">{{ item.type }}</el-tag>
@@ -68,6 +68,7 @@
                         <el-button
                           circle
                           plain
+                          type="info"
                           :icon="EditPen"
                           aria-label="編輯金額"
                           @click="editItem(item)"
@@ -89,7 +90,6 @@
                   >
                     {{ item.description }}
                   </span>
-                  <el-divider v-if="index < day.items.length - 1" style="margin: 6px 0; width: 100%;" />
                 </template>
               </div>
             </el-card>
@@ -319,3 +319,23 @@ const formatCurrency = (value: number) =>
     maximumFractionDigits: 0,
   }).format(value)
 </script>
+
+<style scoped lang="scss">
+:deep(.daily-recessed-card.el-card) {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.44) 0%, rgba(255, 255, 255, 0.28) 100%);
+  border-color: rgba(255, 255, 255, 0.72);
+  box-shadow: inset 0 2px 8px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.66);
+  backdrop-filter: blur(10px) saturate(150%);
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
+}
+
+:deep(.date-chip.el-tag) {
+  min-width: 56px;
+  justify-content: center;
+  border-color: rgba(255, 255, 255, 0.72);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.52) 0%, rgba(255, 255, 255, 0.32) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.64), 0 1px 2px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(8px) saturate(150%);
+  -webkit-backdrop-filter: blur(8px) saturate(150%);
+}
+</style>

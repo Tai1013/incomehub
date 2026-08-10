@@ -32,9 +32,11 @@ const userName = computed(() => {
 }
 
 .welcome-card {
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.56);
+  backdrop-filter: blur(18px) saturate(170%);
+  -webkit-backdrop-filter: blur(18px) saturate(170%);
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.62);
   border-radius: 16px;
   padding: 16px 18px;
 }
@@ -52,7 +54,7 @@ const userName = computed(() => {
   margin: 0;
   font-size: 1.3rem;
   font-weight: 700;
-  color: #1c1917;
+  color: #111827;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

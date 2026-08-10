@@ -30,44 +30,50 @@
 
         <el-form-item label="分類" prop="type">
           <div class="type-grid">
-            <button
+            <el-button
               v-for="o in INCOME_TYPE_OPTIONS"
               :key="o.value"
-              type="button"
+              type="default"
               class="type-tile"
               :class="{ 'is-active': formModel.type === o.value }"
+              plain
               @click="formModel.type = o.value"
             >
-              <el-icon class="type-tile-icon">
-                <component :is="o.icon" />
-              </el-icon>
-              <span class="type-tile-label">{{ o.label }}</span>
-            </button>
+              <span class="type-tile-content">
+                <el-icon class="type-tile-icon">
+                  <component :is="o.icon" />
+                </el-icon>
+                <div class="type-tile-label">{{ o.label }}</div>
+              </span>
+            </el-button>
           </div>
         </el-form-item>
 
-        <el-form-item label="金額" prop="amount">
-          <el-input
-            :model-value="formattedAmount"
-            readonly
-            class="amount-input"
-          >
-            <template #prepend>NT$</template>
-          </el-input>
+        <el-form-item label="金額" prop="amount" class="amount-form-item">
+          <section class="amount-entry-block">
+            <el-input
+              v-model="formattedAmount"
+              inputmode="numeric"
+              placeholder="請輸入金額"
+              class="amount-input"
+            >
+              <template #prepend>NT$</template>
+            </el-input>
+
+            <div class="keypad-grid">
+              <el-button
+                v-for="key in keypadKeys"
+                :key="key"
+                type="default"
+                class="keypad-key"
+                @click="handleKeypadPress(key)"
+              >
+                {{ key }}
+              </el-button>
+            </div>
+          </section>
         </el-form-item>
       </el-form>
-
-      <div class="keypad-grid">
-        <el-button
-          v-for="key in keypadKeys"
-          :key="key"
-          type="default"
-          class="keypad-key"
-          @click="handleKeypadPress(key)"
-        >
-          {{ key }}
-        </el-button>
-      </div>
 
       <el-form
         ref="descFormRef"
@@ -154,7 +160,14 @@ const dialogVisible = computed({
 })
 
 const parsedAmount = computed(() => Number(amountInput.value || '0'))
-const formattedAmount = computed(() => (amountInput.value ? Number(amountInput.value).toLocaleString('zh-TW') : '0'))
+const formattedAmount = computed({
+  get: () => (amountInput.value ? Number(amountInput.value).toLocaleString('zh-TW') : ''),
+  set: (value: string) => {
+    const normalized = value.replace(/\D/g, '').slice(0, 9)
+    amountInput.value = normalized
+    formModel.amount = normalized ? Number(normalized) : null
+  },
+})
 
 const appendAmount = (digit: string) => {
   if (amountInput.value.length >= 9) {
@@ -328,6 +341,7 @@ watch(
 
 .type-tile {
   width: 100%;
+  height: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -335,12 +349,27 @@ watch(
   gap: 4px;
   min-height: 64px;
   padding: 8px 4px;
-  border: 1px solid var(--el-border-color);
+  border: 1px solid rgba(255, 255, 255, 0.58);
   border-radius: 10px;
-  background: var(--el-fill-color-blank);
+  background: rgba(255, 255, 255, 0.56);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.52);
   color: var(--el-text-color-regular);
-  cursor: pointer;
+  margin: 0;
   transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+:deep(.type-tile .el-button__text) {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.type-tile-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 
 @media (hover: hover) {
@@ -351,7 +380,7 @@ watch(
 
 .type-tile.is-active {
   border-color: var(--el-color-primary);
-  background: var(--el-color-primary-light-9);
+  background: rgba(254, 243, 224, 0.82);
   color: var(--el-color-primary);
 }
 
@@ -360,21 +389,48 @@ watch(
 }
 
 .type-tile-label {
+  width: 100%;
+  margin: 0;
+  padding: 0;
   font-size: 13px;
   line-height: 1.2;
+  text-align: center;
+}
+
+:deep(.amount-form-item .el-form-item__content) {
+  display: block;
+}
+
+.amount-entry-block {
+  width: 100%;
+  display: grid;
+  gap: 0;
 }
 
 :deep(.amount-input .el-input__inner) {
   text-align: right;
 }
 
+:deep(.amount-input .el-input__wrapper) {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+:deep(.amount-input .el-input-group__prepend) {
+  border-bottom-left-radius: 0;
+}
+
 .keypad-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0;
-  margin-bottom: 14px;
-  border: 1px solid var(--el-border-color);
-  border-radius: 10px;
+  margin-top: 0;
+  margin-bottom: 0;
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  border-top: 0;
+  border-radius: 0 0 16px 16px;
+  background: rgba(255, 255, 255, 0.64);
+  backdrop-filter: blur(10px);
   overflow: hidden;
 }
 
@@ -391,6 +447,7 @@ watch(
 :deep(.keypad-key.el-button) {
   border-radius: 0;
   border: 0;
+  background: transparent;
 }
 
 :deep(.keypad-grid .keypad-key:nth-child(3n + 2).el-button),
@@ -400,6 +457,11 @@ watch(
 
 :deep(.keypad-grid .keypad-key:nth-child(n + 4).el-button) {
   border-top: 1px solid var(--el-border-color);
+}
+
+:deep(.el-textarea .el-input__count) {
+  background: transparent;
+  box-shadow: none;
 }
 
 .action-buttons {

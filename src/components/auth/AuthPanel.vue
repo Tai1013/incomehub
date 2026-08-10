@@ -166,6 +166,14 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   padding: 16px;
-  background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+  background: transparent;
+}
+
+:deep(.el-card) {
+  background: rgba(255, 255, 255, 0.64);
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  box-shadow: 0 22px 38px rgba(15, 23, 42, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(20px) saturate(165%);
+  -webkit-backdrop-filter: blur(20px) saturate(165%);
 }
 </style>
