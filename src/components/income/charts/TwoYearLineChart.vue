@@ -124,6 +124,11 @@ const isYearOptionDisabled = (year: string) => draftYears.value.length >= 3 && !
 const MONTH_LABELS = Array.from({ length: 12 }, (_, i) => `${i + 1}月`)
 const COLORS = ['#f59e0b', '#3b82f6', '#10b981']
 
+const isFutureMonth = (year: string, monthIdx: number) => {
+  const target = dayjs(`${year}-${String(monthIdx + 1).padStart(2, '0')}-01`)
+  return target.isAfter(dayjs().startOf('month'))
+}
+
 const monthlyTotal = (year: string, monthIdx: number) => {
   const monthStr = `${year}-${String(monthIdx + 1).padStart(2, '0')}`
   return store.dailyLists
@@ -135,27 +140,41 @@ const monthlyTotal = (year: string, monthIdx: number) => {
 const yearSeries = computed(() =>
   selectedYears.value.map((year) => ({
     year,
-    data: MONTH_LABELS.map((_, i) => monthlyTotal(year, i)),
+    data: MONTH_LABELS.map((_, i) => {
+      if (isFutureMonth(year, i)) return null
+      return monthlyTotal(year, i)
+    }),
   }))
 )
 
 const hasData = computed(() =>
-  yearSeries.value.some(series => series.data.some(v => v > 0))
+  yearSeries.value.some(series => series.data.some(v => (v ?? 0) > 0))
 )
 
 const chartData = computed(() => ({
   labels: MONTH_LABELS,
-  datasets: yearSeries.value.map((series, idx) => ({
-    label: `${series.year}年`,
-    data: series.data,
-    borderColor: COLORS[idx % COLORS.length],
-    backgroundColor: COLORS[idx % COLORS.length] + '22',
-    borderWidth: 2.5,
-    pointBackgroundColor: COLORS[idx % COLORS.length],
-    pointRadius: 4,
-    tension: 0.3,
-    fill: false,
-  })),
+  datasets: yearSeries.value.map((series, idx) => {
+    const color = COLORS[idx % COLORS.length]
+    return {
+      label: `${series.year}年`,
+      data: series.data,
+      borderColor: color,
+      backgroundColor: color + '22',
+      borderWidth: 2.5,
+      pointBackgroundColor: series.data.map((v) => {
+        if (v == null) return 'transparent'
+        return v > 0 ? color : '#ffffff'
+      }),
+      pointBorderColor: series.data.map((v) => {
+        if (v == null) return 'transparent'
+        return color
+      }),
+      pointBorderWidth: series.data.map(v => v == null ? 0 : 2),
+      pointRadius: series.data.map(v => v == null ? 0 : 4),
+      tension: 0.3,
+      fill: false,
+    }
+  }),
 }))
 
 const chartOptions = {
@@ -165,7 +184,8 @@ const chartOptions = {
     legend: { position: 'bottom' as const },
     tooltip: {
       callbacks: {
-        label: (ctx: any) => ` ${ctx.dataset.label}: $${ctx.parsed.y.toLocaleString()}`,
+        label: (ctx: any) =>
+          ctx.parsed.y != null ? ` ${ctx.dataset.label}: $${ctx.parsed.y.toLocaleString()}` : '',
       },
     },
   },

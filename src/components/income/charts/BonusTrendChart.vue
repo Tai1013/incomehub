@@ -122,7 +122,13 @@ const applyFilter = () => {
 
 const MONTH_LABELS = Array.from({ length: 12 }, (_, i) => `${i + 1}月`)
 
-const amountForMonth = (year: number, monthIdx: number): number => {
+const isFutureMonth = (year: number, monthIdx: number) => {
+  const target = dayjs(`${year}-${String(monthIdx + 1).padStart(2, '0')}-01`)
+  return target.isAfter(dayjs().startOf('month'))
+}
+
+const amountForMonth = (year: number, monthIdx: number): number | null => {
+  if (isFutureMonth(year, monthIdx)) return null
   const monthStr = `${year}-${String(monthIdx + 1).padStart(2, '0')}`
   return store.dailyLists
     .filter(d => d.date.startsWith(monthStr))
@@ -135,16 +141,16 @@ const endYearData = computed(() => MONTH_LABELS.map((_, i) => amountForMonth(end
 const startYearData = computed(() => MONTH_LABELS.map((_, i) => amountForMonth(startYear.value, i)))
 
 const hasData = computed(() =>
-  endYearData.value.some(v => v > 0) || startYearData.value.some(v => v > 0)
+  endYearData.value.some(v => (v ?? 0) > 0) || startYearData.value.some(v => (v ?? 0) > 0)
 )
 
 const endYearTotal = computed(() => {
-  const total = endYearData.value.reduce((s, v) => s + v, 0)
+  const total = endYearData.value.reduce<number>((s, v) => s + (v ?? 0), 0)
   return `$${total.toLocaleString()}`
 })
 
 const suggestedMax = computed(() => {
-  const allValues = [...endYearData.value, ...startYearData.value].filter(v => v > 0)
+  const allValues = [...endYearData.value, ...startYearData.value].filter((v): v is number => (v ?? 0) > 0)
   if (allValues.length === 0) return 10000
   return Math.ceil(Math.max(...allValues) * 1.2 / 1000) * 1000
 })
@@ -158,8 +164,16 @@ const chartData = computed(() => ({
       borderColor: '#f59e0b',
       backgroundColor: 'rgba(245,158,11,0.1)',
       borderWidth: 2.5,
-      pointBackgroundColor: endYearData.value.map(v => v > 0 ? '#f59e0b' : 'transparent'),
-      pointRadius: endYearData.value.map(v => v > 0 ? 4 : 0),
+      pointBackgroundColor: endYearData.value.map((v) => {
+        if (v == null) return 'transparent'
+        return v > 0 ? '#f59e0b' : '#ffffff'
+      }),
+      pointBorderColor: endYearData.value.map((v) => {
+        if (v == null) return 'transparent'
+        return '#f59e0b'
+      }),
+      pointBorderWidth: endYearData.value.map(v => v == null ? 0 : 2),
+      pointRadius: endYearData.value.map(v => v == null ? 0 : 4),
       tension: 0.3,
       fill: false,
     },
@@ -170,8 +184,16 @@ const chartData = computed(() => ({
       backgroundColor: 'rgba(59,130,246,0.1)',
       borderWidth: 2.5,
       borderDash: [5, 4],
-      pointBackgroundColor: startYearData.value.map(v => v > 0 ? '#3b82f6' : 'transparent'),
-      pointRadius: startYearData.value.map(v => v > 0 ? 4 : 0),
+      pointBackgroundColor: startYearData.value.map((v) => {
+        if (v == null) return 'transparent'
+        return v > 0 ? '#3b82f6' : '#ffffff'
+      }),
+      pointBorderColor: startYearData.value.map((v) => {
+        if (v == null) return 'transparent'
+        return '#3b82f6'
+      }),
+      pointBorderWidth: startYearData.value.map(v => v == null ? 0 : 2),
+      pointRadius: startYearData.value.map(v => v == null ? 0 : 4),
       tension: 0.3,
       fill: false,
     },
@@ -187,7 +209,9 @@ const chartOptions = computed(() => ({
     tooltip: {
       callbacks: {
         label: (ctx: any) =>
-          ctx.parsed.y > 0
+          ctx.parsed.y == null
+            ? ''
+            : ctx.parsed.y > 0
             ? ` ${ctx.dataset.label}: $${ctx.parsed.y.toLocaleString()}`
             : ` ${ctx.dataset.label}: 無`,
       },

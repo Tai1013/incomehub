@@ -86,6 +86,11 @@ const applyYear = () => {
 
 const MONTH_LABELS = Array.from({ length: 12 }, (_, i) => `${i + 1}月`)
 
+const isFutureMonth = (year: string | number, monthIdx: number) => {
+  const target = dayjs(`${year}-${String(monthIdx + 1).padStart(2, '0')}-01`)
+  return target.isAfter(dayjs().startOf('month'))
+}
+
 const compareYearEntries = computed(() =>
   store.dailyLists
     .filter(d => d.date.startsWith(selectedYear.value))
@@ -131,6 +136,7 @@ const chartData = computed(() => {
 
   let currentCumulative = 0
   const currentData = MONTH_LABELS.map((_, monthIdx) => {
+    if (isFutureMonth(currentYear, monthIdx)) return null
     const monthStr = `${currentYear}-${String(monthIdx + 1).padStart(2, '0')}`
     currentCumulative += currentYearEntries.value
       .filter(e => e.date.startsWith(monthStr))
@@ -138,9 +144,10 @@ const chartData = computed(() => {
     return currentCumulative
   })
 
-  const currentPointColors = currentData.map((value, monthIdx) =>
-    value >= compareData[monthIdx] ? '#F59E0B' : '#F56C6C'
-  )
+  const currentPointColors = currentData.map((value, monthIdx) => {
+    if (value == null || compareData[monthIdx] == null) return 'transparent'
+    return value >= compareData[monthIdx] ? '#F59E0B' : '#F56C6C'
+  })
 
   return {
     labels: MONTH_LABELS,
@@ -149,9 +156,10 @@ const chartData = computed(() => {
         label: `${selectedYear.value}年`,
         data: compareData,
         borderColor: '#909399',
+        borderDash: [8, 6],
         backgroundColor: 'rgba(144,147,153,0.12)',
         borderWidth: 2.5,
-        pointBackgroundColor: '#ffffff',
+        pointBackgroundColor: compareData.map(v => v > 0 ? '#909399' : '#ffffff'),
         pointBorderColor: '#909399',
         pointBorderWidth: 2,
         pointRadius: 4,
@@ -165,10 +173,18 @@ const chartData = computed(() => {
         borderColor: '#F59E0B',
         backgroundColor: 'rgba(245,158,11,0.12)',
         borderWidth: 2.5,
-        pointBackgroundColor: currentPointColors,
-        pointBorderColor: currentPointColors,
-        pointBorderWidth: 2,
-        pointRadius: 5,
+        pointBackgroundColor: currentData.map((value, monthIdx) => {
+          if (value == null) return 'transparent'
+          if (value === 0) return '#ffffff'
+          return currentPointColors[monthIdx]
+        }),
+        pointBorderColor: currentData.map((value, monthIdx) => {
+          if (value == null) return 'transparent'
+          if (value === 0) return '#F59E0B'
+          return currentPointColors[monthIdx]
+        }),
+        pointBorderWidth: currentData.map(v => v == null ? 0 : 2),
+        pointRadius: currentData.map(v => v == null ? 0 : 5),
         pointHoverRadius: 6,
         tension: 0.4,
         fill: false,
@@ -184,7 +200,8 @@ const chartOptions = {
     legend: { position: 'bottom' as const },
     tooltip: {
       callbacks: {
-        label: (ctx: any) => ` ${ctx.dataset.label} 累積: $${ctx.parsed.y.toLocaleString()}`,
+        label: (ctx: any) =>
+          ctx.parsed.y != null ? ` ${ctx.dataset.label} 累積: $${ctx.parsed.y.toLocaleString()}` : '',
       },
     },
   },

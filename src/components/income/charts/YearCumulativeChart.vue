@@ -81,6 +81,11 @@ const applyYear = () => {
 
 const MONTH_LABELS = Array.from({ length: 12 }, (_, i) => `${i + 1}月`)
 
+const isFutureMonth = (year: string, monthIdx: number) => {
+  const target = dayjs(`${year}-${String(monthIdx + 1).padStart(2, '0')}-01`)
+  return target.isAfter(dayjs().startOf('month'))
+}
+
 const yearEntries = computed(() =>
   store.dailyLists
     .filter(d => d.date.startsWith(selectedYear.value))
@@ -97,6 +102,7 @@ const totalFormatted = computed(() => {
 const chartData = computed(() => {
   let cumulative = 0
   const data = MONTH_LABELS.map((_, monthIdx) => {
+    if (isFutureMonth(selectedYear.value, monthIdx)) return null
     const monthStr = `${selectedYear.value}-${String(monthIdx + 1).padStart(2, '0')}`
     cumulative += yearEntries.value
       .filter(e => e.date.startsWith(monthStr))
@@ -112,8 +118,16 @@ const chartData = computed(() => {
       borderColor: '#f59e0b',
       backgroundColor: 'rgba(245,158,11,0.12)',
       borderWidth: 2.5,
-      pointBackgroundColor: '#f59e0b',
-      pointRadius: 4,
+      pointBackgroundColor: data.map((v) => {
+        if (v == null) return 'transparent'
+        return v > 0 ? '#f59e0b' : '#ffffff'
+      }),
+      pointBorderColor: data.map((v) => {
+        if (v == null) return 'transparent'
+        return '#f59e0b'
+      }),
+      pointBorderWidth: data.map(v => v == null ? 0 : 2),
+      pointRadius: data.map(v => v == null ? 0 : 4),
       tension: 0.4,
       fill: true,
     }],
@@ -126,7 +140,8 @@ const chartOptions = {
     legend: { display: false },
     tooltip: {
       callbacks: {
-        label: (ctx: any) => ` 累積: $${ctx.parsed.y.toLocaleString()}`,
+        label: (ctx: any) =>
+          ctx.parsed.y != null ? ` 累積: $${ctx.parsed.y.toLocaleString()}` : '',
       },
     },
   },

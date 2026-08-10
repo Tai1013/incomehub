@@ -82,6 +82,11 @@ const applyYear = () => {
 const MONTH_LABELS = Array.from({ length: 12 }, (_, i) => `${i + 1}月`)
 const COLORS = ['#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#8b5cf6', '#f97316']
 
+const isFutureMonth = (year: string, monthIdx: number) => {
+  const target = dayjs(`${year}-${String(monthIdx + 1).padStart(2, '0')}-01`)
+  return target.isAfter(dayjs().startOf('month'))
+}
+
 const yearEntries = computed(() =>
   store.dailyLists
     .filter(d => d.date.startsWith(selectedYear.value))
@@ -93,6 +98,7 @@ const hasData = computed(() => yearEntries.value.length > 0)
 const chartData = computed(() => {
   const datasets = incomeTypes.map((type, idx) => {
     const data = MONTH_LABELS.map((_, monthIdx) => {
+      if (isFutureMonth(selectedYear.value, monthIdx)) return null
       const monthStr = `${selectedYear.value}-${String(monthIdx + 1).padStart(2, '0')}`
       return yearEntries.value
         .filter(e => e.type === type && e.date.startsWith(monthStr))
@@ -104,10 +110,18 @@ const chartData = computed(() => {
       borderColor: COLORS[idx % COLORS.length],
       backgroundColor: COLORS[idx % COLORS.length] + '33',
       borderWidth: 2,
-      pointBackgroundColor: COLORS[idx % COLORS.length],
-      pointRadius: 3,
+      pointBackgroundColor: data.map((v) => {
+        if (v == null) return 'transparent'
+        return v > 0 ? COLORS[idx % COLORS.length] : '#ffffff'
+      }),
+      pointBorderColor: data.map((v) => {
+        if (v == null) return 'transparent'
+        return COLORS[idx % COLORS.length]
+      }),
+      pointBorderWidth: data.map(v => v == null ? 0 : 2),
+      pointRadius: data.map(v => v == null ? 0 : 3),
       tension: 0.3,
-      hidden: !data.some(v => v > 0),
+      hidden: !data.some(v => (v ?? 0) > 0),
     }
   })
 
@@ -121,7 +135,8 @@ const chartOptions = {
     legend: { position: 'bottom' as const },
     tooltip: {
       callbacks: {
-        label: (ctx: any) => ` ${ctx.dataset.label}: $${ctx.parsed.y.toLocaleString()}`,
+        label: (ctx: any) =>
+          ctx.parsed.y != null ? ` ${ctx.dataset.label}: $${ctx.parsed.y.toLocaleString()}` : '',
       },
     },
   },
