@@ -8,11 +8,13 @@ import BottomNav from '../components/layout/BottomNav.vue'
 import AddIncomeDialog from '../components/income/AddIncomeDialog.vue'
 import { useIncomeStore } from '../stores/income'
 import { useAuthStore } from '../stores/auth'
+import { useChartFavoritesStore } from '../stores/chartFavorites'
 
 const route = useRoute()
 const router = useRouter()
 const incomeStore = useIncomeStore()
 const authStore = useAuthStore()
+const chartFavoritesStore = useChartFavoritesStore()
 const drawerVisible = ref(false)
 const userName = computed(() => {
   const email = authStore.user?.email
@@ -21,21 +23,32 @@ const userName = computed(() => {
 })
 
 watch(
-  () => authStore.user?.id,
-  async (userId) => {
+  [() => authStore.user?.id, () => authStore.roleStatus],
+  async ([userId, roleStatus]) => {
     if (!userId) {
       incomeStore.resetEntries()
+      chartFavoritesStore.resetFavorites()
       return
     }
 
-    if (incomeStore.initialized) {
+    if (!chartFavoritesStore.initialized && roleStatus !== 'idle') {
+      chartFavoritesStore.hydrateFavorites(authStore.favoriteChartKeys)
+    }
+
+    const tasks: Promise<unknown>[] = []
+
+    if (!incomeStore.initialized) {
+      tasks.push(incomeStore.fetchEntries())
+    }
+
+    if (tasks.length === 0) {
       return
     }
 
     try {
-      await incomeStore.fetchEntries()
+      await Promise.all(tasks)
     } catch (error) {
-      ElMessage.error(error instanceof Error ? error.message : '讀取收入資料失敗')
+      ElMessage.error(error instanceof Error ? error.message : '讀取資料失敗')
     }
   },
   { immediate: true },

@@ -3,6 +3,15 @@ import { defineStore } from 'pinia'
 import type { User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import { useLoading } from '../composables/useLoading'
+import { FAVORITE_CHART_KEYS } from '../types/chart'
+import type { FavoriteChartKey } from '../types/chart'
+
+interface ProfileRow {
+  role: string | null
+  yearly_target: number | null
+  monthly_target: number | null
+  favorite_chart_keys: string[] | null
+}
 
 export const useAuthStore = defineStore('auth', () => {
   const { load, unLoad } = useLoading()
@@ -13,14 +22,30 @@ export const useAuthStore = defineStore('auth', () => {
   const loading = ref(false)
   const yearlyTarget = ref<number | null>(null)
   const monthlyTarget = ref<number | null>(null)
+  const favoriteChartKeys = ref<FavoriteChartKey[]>([])
   let initialized = false
   let roleRequestUserId: string | null = null
+
+  const favoriteChartKeySet = new Set(FAVORITE_CHART_KEYS)
+
+  const toFavoriteChartKeys = (keys: unknown): FavoriteChartKey[] => {
+    if (!Array.isArray(keys)) {
+      return []
+    }
+
+    return keys.filter((item): item is FavoriteChartKey => {
+      return typeof item === 'string' && favoriteChartKeySet.has(item as FavoriteChartKey)
+    })
+  }
 
   const loadRole = async (userId: string | undefined) => {
     if (!userId) {
       role.value = 'user'
       roleStatus.value = 'idle'
       roleRequestUserId = null
+      yearlyTarget.value = null
+      monthlyTarget.value = null
+      favoriteChartKeys.value = []
       return
     }
 
@@ -34,7 +59,7 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('role, yearly_target, monthly_target')
+        .select('role, yearly_target, monthly_target, favorite_chart_keys')
         .eq('id', userId)
         .maybeSingle()
 
@@ -42,19 +67,28 @@ export const useAuthStore = defineStore('auth', () => {
         console.error('Failed to load profile role', error)
         role.value = 'user'
         roleStatus.value = 'error'
+        yearlyTarget.value = null
+        monthlyTarget.value = null
+        favoriteChartKeys.value = []
         return
       }
 
-      if (!data?.role) {
+      const profile = data as ProfileRow | null
+
+      if (!profile) {
         role.value = 'user'
         roleStatus.value = 'missing'
+        yearlyTarget.value = null
+        monthlyTarget.value = null
+        favoriteChartKeys.value = []
         return
       }
 
-      role.value = normalizeRole(data.role)
-      yearlyTarget.value = data.yearly_target ?? null
-      monthlyTarget.value = data.monthly_target ?? null
-      roleStatus.value = 'loaded'
+      role.value = normalizeRole(profile.role)
+      yearlyTarget.value = profile.yearly_target ?? null
+      monthlyTarget.value = profile.monthly_target ?? null
+      favoriteChartKeys.value = toFavoriteChartKeys(profile.favorite_chart_keys)
+      roleStatus.value = profile.role ? 'loaded' : 'missing'
     } finally {
       unLoad()
     }
@@ -141,6 +175,7 @@ export const useAuthStore = defineStore('auth', () => {
       roleRequestUserId = null
       yearlyTarget.value = null
       monthlyTarget.value = null
+      favoriteChartKeys.value = []
     } finally {
       loading.value = false
       unLoad()
@@ -172,6 +207,7 @@ export const useAuthStore = defineStore('auth', () => {
     loading,
     yearlyTarget,
     monthlyTarget,
+    favoriteChartKeys,
     initAuth,
     signUpWithEmail,
     signInWithEmail,

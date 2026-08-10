@@ -1,17 +1,21 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useAuthStore } from '../stores/auth'
-import YearBarChart from '../components/income/charts/YearBarChart.vue'
-import YearPieChart from '../components/income/charts/YearPieChart.vue'
-import TypeTrendChart from '../components/income/charts/TypeTrendChart.vue'
+import { CHART_DEFINITIONS } from '../configs/charts'
+import { useChartFavoritesStore } from '../stores/chartFavorites'
 
 const authStore = useAuthStore()
+const chartFavoritesStore = useChartFavoritesStore()
+const { favoriteKeySet } = storeToRefs(chartFavoritesStore)
 
 const userName = computed(() => {
   const email = authStore.user?.email
   if (!email) return '未登入'
   return email.split('@')[0]
 })
+
+const favoriteCharts = computed(() => CHART_DEFINITIONS.filter((chart) => favoriteKeySet.value.has(chart.key)))
 </script>
 
 <template>
@@ -20,9 +24,16 @@ const userName = computed(() => {
       <p class="welcome-brand">incomehub</p>
       <h1 class="welcome-title">歡迎回來，{{ userName }}</h1>
     </section>
-    <YearBarChart />
-    <TypeTrendChart />
-    <YearPieChart />
+
+    <template v-if="favoriteCharts.length">
+      <component
+        v-for="chart in favoriteCharts"
+        :key="chart.key"
+        :is="chart.component"
+      />
+    </template>
+
+    <el-empty v-else description="尚未加入最愛圖表" class="favorite-empty" />
   </div>
 </template>
 
@@ -58,5 +69,11 @@ const userName = computed(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.favorite-empty {
+  background: rgba(255, 255, 255, 0.56);
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  border-radius: 16px;
 }
 </style>

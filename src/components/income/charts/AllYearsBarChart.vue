@@ -2,7 +2,7 @@
   <el-card shadow="never">
     <template #header>
       <div class="chart-header">
-        <span>歷年收入總覽</span>
+        <ChartHeaderTitle chart-key="all-years-bar" title="歷年收入總覽" />
       </div>
     </template>
     <div v-if="hasData">
@@ -17,6 +17,7 @@ import { computed } from 'vue'
 import { Bar } from 'vue-chartjs'
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip, Legend } from 'chart.js'
 import { useIncomeStore } from '../../../stores/income'
+import ChartHeaderTitle from './ChartHeaderTitle.vue'
 import { useChartFormat } from '../../../composables/useChartFormat'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend)

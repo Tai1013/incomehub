@@ -2,7 +2,7 @@
   <el-card shadow="never">
     <template #header>
       <div class="chart-header">
-        <span>年累積收入比較</span>
+        <ChartHeaderTitle chart-key="year-cumulative-compare" title="年累積收入比較" />
         <div class="chart-header-tags">
           <el-tag type="info" size="small" style="cursor: pointer;" @click="openYearDialog">比較年 {{ selectedYear }}</el-tag>
           <el-tag type="primary" size="small">今年 {{ currentYear }}</el-tag>
@@ -43,6 +43,7 @@ import {
   LineElement, PointElement, Tooltip, Legend, Filler,
 } from 'chart.js'
 import { useIncomeStore } from '../../../stores/income'
+import ChartHeaderTitle from './ChartHeaderTitle.vue'
 import { useChartFormat } from '../../../composables/useChartFormat'
 
 ChartJS.register(CategoryScale, LinearScale, LineElement, PointElement, Tooltip, Legend, Filler)

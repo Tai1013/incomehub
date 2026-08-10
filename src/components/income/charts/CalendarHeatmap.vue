@@ -2,7 +2,7 @@
   <el-card shadow="never">
     <template #header>
       <div class="chart-header">
-        <span>收入日曆熱力圖</span>
+        <ChartHeaderTitle chart-key="calendar-heatmap" title="收入日曆熱力圖" />
         <div class="chart-header-tags">
           <el-tag type="info" size="small" style="cursor: pointer;" @click="openYearDialog">{{ selectedYear }}年</el-tag>
         </div>
@@ -59,6 +59,7 @@ import { computed, ref } from 'vue'
 import dayjs from 'dayjs'
 import { ElMessage } from 'element-plus'
 import { useIncomeStore } from '../../../stores/income'
+import ChartHeaderTitle from './ChartHeaderTitle.vue'
 
 const store = useIncomeStore()
 const currentYear = dayjs().year()

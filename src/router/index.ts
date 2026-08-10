@@ -6,6 +6,18 @@ const { load, unLoad } = useLoading()
 
 const router = createRouter({
   history: createWebHashHistory(import.meta.env.VITE_APP_BASE),
+  scrollBehavior(to) {
+    if (to.hash) {
+      const header = document.querySelector('.app-header') as HTMLElement | null
+      const headerHeight = header?.offsetHeight ?? 52
+      return {
+        el: to.hash,
+        top: headerHeight + 12,
+        behavior: 'smooth',
+      }
+    }
+    return { top: 0 }
+  },
   routes: [
     {
       path: '/login',

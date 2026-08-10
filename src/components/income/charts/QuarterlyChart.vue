@@ -2,7 +2,7 @@
   <el-card shadow="never">
     <template #header>
       <div class="chart-header">
-        <span>季度收入分析</span>
+        <ChartHeaderTitle chart-key="quarterly" title="季度收入分析" />
         <div class="chart-header-tags">
           <el-tag type="info" size="small" style="cursor: pointer;" @click="openYearDialog">{{ selectedYear }}年</el-tag>
           <el-tag size="small">年總計 {{ totalFormatted }}</el-tag>
@@ -39,6 +39,7 @@ import { ElMessage } from 'element-plus'
 import { Bar } from 'vue-chartjs'
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip, Legend } from 'chart.js'
 import { useIncomeStore } from '../../../stores/income'
+import ChartHeaderTitle from './ChartHeaderTitle.vue'
 import { incomeTypes } from '../../../types/income'
 import { useChartFormat } from '../../../composables/useChartFormat'
 

@@ -2,7 +2,7 @@
   <el-card shadow="never">
     <template #header>
       <div class="chart-header">
-        <span>每月收入</span>
+        <ChartHeaderTitle chart-key="year-bar" title="每月收入" />
         <div class="chart-header-tags">
           <el-tag type="info" size="small" style="cursor: pointer;" @click="openRangeDialog">{{ rangeLabel }}</el-tag>
           <el-tag size="small">總計 {{ totalFormatted }}</el-tag>
@@ -71,6 +71,7 @@ import {
   Legend,
 } from 'chart.js'
 import { useIncomeStore } from '../../../stores/income'
+import ChartHeaderTitle from './ChartHeaderTitle.vue'
 import { incomeTypes } from '../../../types/income'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend)

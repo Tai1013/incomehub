@@ -2,7 +2,7 @@
   <el-card shadow="never">
     <template #header>
       <div class="chart-header">
-        <span>月分類佔比</span>
+        <ChartHeaderTitle chart-key="month-pie" title="月分類佔比" />
         <div class="chart-header-tags">
           <el-tag type="info" size="small" style="cursor: pointer;" @click="openMonthDialog">{{ selectedMonthLabel }}</el-tag>
           <el-tag size="small">總計 {{ totalFormatted }}</el-tag>
@@ -48,6 +48,7 @@ import { ElMessage } from 'element-plus'
 import { PolarArea } from 'vue-chartjs'
 import { Chart as ChartJS, ArcElement, RadialLinearScale, Tooltip, Legend } from 'chart.js'
 import { useIncomeStore } from '../../../stores/income'
+import ChartHeaderTitle from './ChartHeaderTitle.vue'
 import { incomeTypes } from '../../../types/income'
 import { useChartFormat } from '../../../composables/useChartFormat'
 

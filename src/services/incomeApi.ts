@@ -1,5 +1,7 @@
 import { supabase } from '../lib/supabase'
 import type { IncomeEntry, IncomeType } from '../types/income'
+import { FAVORITE_CHART_KEYS } from '../types/chart'
+import type { FavoriteChartKey } from '../types/chart'
 
 interface IncomeEntryRow {
   id: string
@@ -14,6 +16,74 @@ interface IncomeEntryPayload {
   type: IncomeType
   amount: number
   description?: string
+}
+
+interface FavoriteChartProfileRow {
+  favorite_chart_keys: string[] | null
+}
+
+const favoriteChartKeySet = new Set(FAVORITE_CHART_KEYS)
+
+const toFavoriteChartKeys = (keys: unknown): FavoriteChartKey[] => {
+  if (!Array.isArray(keys)) {
+    return []
+  }
+
+  return keys.filter((item): item is FavoriteChartKey => typeof item === 'string' && favoriteChartKeySet.has(item as FavoriteChartKey))
+}
+
+const getCurrentUserId = async () => {
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser()
+
+  if (error) {
+    throw error
+  }
+
+  if (!user?.id) {
+    throw new Error('尚未登入')
+  }
+
+  return user.id
+}
+
+const getFavoriteChartKeysByUserId = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('favorite_chart_keys')
+    .eq('id', userId)
+    .maybeSingle()
+
+  if (error) {
+    throw error
+  }
+
+  return toFavoriteChartKeys((data as FavoriteChartProfileRow | null)?.favorite_chart_keys)
+}
+
+const updateFavoriteChartKeys = async (userId: string, keys: FavoriteChartKey[]) => {
+  const { error } = await supabase
+    .from('profiles')
+    .upsert(
+      {
+        id: userId,
+        favorite_chart_keys: keys,
+      },
+      {
+        onConflict: 'id',
+      },
+    )
+
+  if (error) {
+    throw error
+  }
+}
+
+const normalizeFavoriteChartKeys = (keys: FavoriteChartKey[]) => {
+  const uniqueKeys = Array.from(new Set(keys))
+  return toFavoriteChartKeys(uniqueKeys)
 }
 
 export const listIncomeEntries = async () => {
@@ -97,4 +167,15 @@ export const deleteIncomeEntry = async (id: string) => {
   if (error) {
     throw error
   }
+}
+
+export const listFavoriteCharts = async () => {
+  const userId = await getCurrentUserId()
+  return getFavoriteChartKeysByUserId(userId)
+}
+
+export const setFavoriteCharts = async (keys: FavoriteChartKey[]) => {
+  const userId = await getCurrentUserId()
+  const nextKeys = normalizeFavoriteChartKeys(keys)
+  await updateFavoriteChartKeys(userId, nextKeys)
 }

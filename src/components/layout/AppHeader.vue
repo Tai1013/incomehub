@@ -41,7 +41,7 @@ const goHome = () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 52px;
+  height: var(--app-header-height);
   padding: 0 12px;
   background: rgba(255, 255, 255, 0.48);
   border-bottom: 1px solid rgba(255, 255, 255, 0.58);

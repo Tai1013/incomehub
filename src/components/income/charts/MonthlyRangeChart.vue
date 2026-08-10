@@ -2,7 +2,7 @@
   <el-card shadow="never">
     <template #header>
       <div class="chart-header">
-        <span>月最高 / 日均 / 最低</span>
+        <ChartHeaderTitle chart-key="monthly-range" title="月最高 / 日均 / 最低" />
         <div class="chart-header-tags">
           <el-tag type="info" size="small" style="cursor: pointer;" @click="openYearDialog">{{ selectedYear }}年（每日）</el-tag>
         </div>
@@ -41,6 +41,7 @@ import {
   LineElement, PointElement, Tooltip, Legend, Filler,
 } from 'chart.js'
 import { useIncomeStore } from '../../../stores/income'
+import ChartHeaderTitle from './ChartHeaderTitle.vue'
 import { useChartFormat } from '../../../composables/useChartFormat'
 
 ChartJS.register(CategoryScale, LinearScale, LineElement, PointElement, Tooltip, Legend, Filler)

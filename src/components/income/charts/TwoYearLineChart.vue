@@ -2,7 +2,7 @@
   <el-card shadow="never">
     <template #header>
       <div class="chart-header">
-        <span>每月總和</span>
+        <ChartHeaderTitle chart-key="two-year-line" title="每月總和" />
         <div class="chart-header-tags">
           <el-tag type="info" size="small" style="cursor: pointer;" @click="openYearDialog">{{ selectedYearsLabel }}</el-tag>
         </div>
@@ -62,6 +62,7 @@ import {
   Filler,
 } from 'chart.js'
 import { useIncomeStore } from '../../../stores/income'
+import ChartHeaderTitle from './ChartHeaderTitle.vue'
 
 ChartJS.register(CategoryScale, LinearScale, LineElement, PointElement, Tooltip, Legend, Filler)
 

@@ -2,7 +2,7 @@
   <el-card shadow="never">
     <template #header>
       <div class="chart-header">
-        <span>各分類月趨勢</span>
+        <ChartHeaderTitle chart-key="type-trend" title="各分類月趨勢" />
         <div class="chart-header-tags">
           <el-tag type="info" size="small" style="cursor: pointer;" @click="openYearDialog">{{ selectedYear }}年</el-tag>
         </div>
@@ -41,6 +41,7 @@ import {
   LineElement, PointElement, Tooltip, Legend,
 } from 'chart.js'
 import { useIncomeStore } from '../../../stores/income'
+import ChartHeaderTitle from './ChartHeaderTitle.vue'
 import { incomeTypes } from '../../../types/income'
 import { useChartFormat } from '../../../composables/useChartFormat'
 

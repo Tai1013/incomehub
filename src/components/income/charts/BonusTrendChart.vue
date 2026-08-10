@@ -2,7 +2,7 @@
   <el-card shadow="never">
     <template #header>
       <div class="chart-header">
-        <span>分類收入趨勢</span>
+        <ChartHeaderTitle chart-key="bonus-trend" title="分類收入趨勢" />
         <div class="chart-header-tags">
           <el-tag type="info" size="small" style="cursor: pointer;" @click="openFilterDialog">
             {{ selectedTypeLabel }} | {{ yearRange }}
@@ -60,6 +60,7 @@ import {
   LineElement, PointElement, Tooltip, Legend, Filler,
 } from 'chart.js'
 import { useIncomeStore } from '../../../stores/income'
+import ChartHeaderTitle from './ChartHeaderTitle.vue'
 import { type IncomeType } from '../../../types/income'
 import { INCOME_TYPE_OPTIONS } from '../../../configs/constant'
 import { useChartFormat } from '../../../composables/useChartFormat'
