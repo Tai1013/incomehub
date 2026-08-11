@@ -36,21 +36,23 @@
       <span class="hm-legend-label">多</span>
     </div>
 
-    <el-dialog v-model="yearDialogVisible" title="選擇年份" width="280px" align-center :lock-scroll="true">
+    <BaseActionDialog
+      v-model="yearDialogVisible"
+      title="選擇年份"
+      width="280px"
+      :lock-scroll="true"
+      :show-cancel-button="false"
+      :show-custom-button="true"
+      custom-button-text="重置"
+      custom-button-type="danger"
+      :footer-button-order="['secondaryConfirm', 'confirm']"
+      @secondary-confirm="resetDraftYear"
+      @confirm="applyYear"
+    >
       <el-select v-model="draftYear" placeholder="年" style="width: 100%;">
         <el-option v-for="year in yearOptions" :key="year" :label="`${year}年`" :value="year" />
       </el-select>
-      <template #footer>
-        <el-row :gutter="10">
-          <el-col :span="12">
-            <el-button type="danger" plain style="width: 100%;" @click="resetDraftYear">重置</el-button>
-          </el-col>
-          <el-col :span="12">
-            <el-button type="primary" style="width: 100%;" @click="applyYear">確定</el-button>
-          </el-col>
-        </el-row>
-      </template>
-    </el-dialog>
+    </BaseActionDialog>
   </el-card>
 </template>
 
@@ -60,6 +62,7 @@ import dayjs from 'dayjs'
 import { ElMessage } from 'element-plus'
 import { useIncomeStore } from '../../../stores/income'
 import ChartHeaderTitle from './ChartHeaderTitle.vue'
+import BaseActionDialog from '../../layout/BaseActionDialog.vue'
 
 const store = useIncomeStore()
 const currentYear = dayjs().year()

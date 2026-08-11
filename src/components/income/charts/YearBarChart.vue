@@ -14,7 +14,19 @@
     </div>
     <el-empty v-else description="區間內尚無收入資料" :image-size="80" />
 
-    <el-dialog v-model="rangeDialogVisible" title="設定年月區間" width="320px" align-center :lock-scroll="true">
+    <BaseActionDialog
+      v-model="rangeDialogVisible"
+      title="設定年月區間"
+      width="320px"
+      :lock-scroll="true"
+      :show-cancel-button="false"
+      :show-custom-button="true"
+      custom-button-text="重置"
+      custom-button-type="danger"
+      :footer-button-order="['secondaryConfirm', 'confirm']"
+      @secondary-confirm="resetDraftRange"
+      @confirm="applyRange"
+    >
       <div style="display: flex; flex-direction: column; gap: 10px;">
         <el-row :gutter="10">
           <el-col :span="12">
@@ -42,18 +54,7 @@
           </el-col>
         </el-row>
       </div>
-
-      <template #footer>
-        <el-row :gutter="10">
-          <el-col :span="12">
-            <el-button type="danger" plain style="width: 100%;" @click="resetDraftRange">重置</el-button>
-          </el-col>
-          <el-col :span="12">
-            <el-button type="primary" style="width: 100%;" @click="applyRange">確定</el-button>
-          </el-col>
-        </el-row>
-      </template>
-    </el-dialog>
+    </BaseActionDialog>
   </el-card>
 </template>
 
@@ -72,6 +73,7 @@ import {
 } from 'chart.js'
 import { useIncomeStore } from '../../../stores/income'
 import ChartHeaderTitle from './ChartHeaderTitle.vue'
+import BaseActionDialog from '../../layout/BaseActionDialog.vue'
 import { useOrderedIncomeTypes } from '../../../composables/useOrderedIncomeTypes'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend)

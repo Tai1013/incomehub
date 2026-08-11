@@ -13,7 +13,19 @@
     </div>
     <el-empty v-else description="所選年份尚無收入資料" :image-size="80" />
 
-    <el-dialog v-model="yearDialogVisible" title="選擇年份（最多3個）" width="320px" align-center :lock-scroll="true">
+    <BaseActionDialog
+      v-model="yearDialogVisible"
+      title="選擇年份（最多3個）"
+      width="320px"
+      :lock-scroll="true"
+      :show-cancel-button="false"
+      :show-custom-button="true"
+      custom-button-text="重置"
+      custom-button-type="danger"
+      :footer-button-order="['secondaryConfirm', 'confirm']"
+      @secondary-confirm="resetDraftYears"
+      @confirm="applyYears"
+    >
       <el-select
         v-model="draftYears"
         multiple
@@ -31,18 +43,7 @@
           :disabled="isYearOptionDisabled(year)"
         />
       </el-select>
-
-      <template #footer>
-        <el-row :gutter="10">
-          <el-col :span="12">
-            <el-button type="danger" plain style="width: 100%;" @click="resetDraftYears">重置</el-button>
-          </el-col>
-          <el-col :span="12">
-            <el-button type="primary" style="width: 100%;" @click="applyYears">確定</el-button>
-          </el-col>
-        </el-row>
-      </template>
-    </el-dialog>
+    </BaseActionDialog>
   </el-card>
 </template>
 
@@ -63,6 +64,7 @@ import {
 } from 'chart.js'
 import { useIncomeStore } from '../../../stores/income'
 import ChartHeaderTitle from './ChartHeaderTitle.vue'
+import BaseActionDialog from '../../layout/BaseActionDialog.vue'
 
 ChartJS.register(CategoryScale, LinearScale, LineElement, PointElement, Tooltip, Legend, Filler)
 

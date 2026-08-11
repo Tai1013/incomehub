@@ -16,7 +16,19 @@
     </div>
     <el-empty v-else :description="`${yearRange} 尚無「${selectedType}」資料`" :image-size="80" />
 
-    <el-dialog v-model="filterDialogVisible" title="篩選條件" width="320px" align-center :lock-scroll="true">
+    <BaseActionDialog
+      v-model="filterDialogVisible"
+      title="篩選條件"
+      width="320px"
+      :lock-scroll="true"
+      :show-cancel-button="false"
+      :show-custom-button="true"
+      custom-button-text="重置"
+      custom-button-type="danger"
+      :footer-button-order="['secondaryConfirm', 'confirm']"
+      @secondary-confirm="resetDraftFilter"
+      @confirm="applyFilter"
+    >
       <div style="display: flex; flex-direction: column; gap: 10px;">
         <el-select v-model="draftType" placeholder="分類" style="width: 100%;">
           <el-option v-for="type in incomeTypeOptions" :key="type" :label="type" :value="type" />
@@ -35,18 +47,7 @@
           </el-col>
         </el-row>
       </div>
-
-      <template #footer>
-        <el-row :gutter="10">
-          <el-col :span="12">
-            <el-button type="danger" plain style="width: 100%;" @click="resetDraftFilter">重置</el-button>
-          </el-col>
-          <el-col :span="12">
-            <el-button type="primary" style="width: 100%;" @click="applyFilter">確定</el-button>
-          </el-col>
-        </el-row>
-      </template>
-    </el-dialog>
+    </BaseActionDialog>
   </el-card>
 </template>
 
@@ -61,6 +62,7 @@ import {
 } from 'chart.js'
 import { useIncomeStore } from '../../../stores/income'
 import ChartHeaderTitle from './ChartHeaderTitle.vue'
+import BaseActionDialog from '../../layout/BaseActionDialog.vue'
 import { type IncomeType } from '../../../types/income'
 import { useChartFormat } from '../../../composables/useChartFormat'
 import { useOrderedIncomeTypes } from '../../../composables/useOrderedIncomeTypes'

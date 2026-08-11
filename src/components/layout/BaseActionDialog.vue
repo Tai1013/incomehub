@@ -28,14 +28,14 @@
         </el-button>
 
         <el-button
-          v-else-if="button === 'secondaryConfirm' && showSecondaryConfirmButton"
-          type="primary"
-          plain
+          v-else-if="button === 'secondaryConfirm' && showCustomButton"
+          :type="customButtonType"
+          :plain="customButtonPlain"
           :loading="secondaryConfirmLoading"
           :disabled="secondaryConfirmDisabled"
           @click="handleSecondaryConfirm"
         >
-          {{ secondaryConfirmButtonText }}
+          {{ customButtonText }}
         </el-button>
       </template>
     </template>
@@ -60,8 +60,10 @@ withDefaults(
     confirmButtonText?: string
     confirmLoading?: boolean
     confirmDisabled?: boolean
-    showSecondaryConfirmButton?: boolean
-    secondaryConfirmButtonText?: string
+    showCustomButton?: boolean
+    customButtonText?: string
+    customButtonType?: 'primary' | 'success' | 'warning' | 'danger' | 'info'
+    customButtonPlain?: boolean
     secondaryConfirmLoading?: boolean
     secondaryConfirmDisabled?: boolean
     footerButtonOrder?: FooterButtonKey[]
@@ -78,8 +80,10 @@ withDefaults(
     confirmButtonText: '確定',
     confirmLoading: false,
     confirmDisabled: false,
-    showSecondaryConfirmButton: false,
-    secondaryConfirmButtonText: '連續確認',
+    showCustomButton: false,
+    customButtonText: '連續確認',
+    customButtonType: 'primary',
+    customButtonPlain: true,
     secondaryConfirmLoading: false,
     secondaryConfirmDisabled: false,
     footerButtonOrder: () => ['cancel', 'confirm', 'secondaryConfirm'],
