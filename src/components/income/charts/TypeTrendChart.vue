@@ -42,13 +42,14 @@ import {
 } from 'chart.js'
 import { useIncomeStore } from '../../../stores/income'
 import ChartHeaderTitle from './ChartHeaderTitle.vue'
-import { incomeTypes } from '../../../types/income'
 import { useChartFormat } from '../../../composables/useChartFormat'
+import { useOrderedIncomeTypes } from '../../../composables/useOrderedIncomeTypes'
 
 ChartJS.register(CategoryScale, LinearScale, LineElement, PointElement, Tooltip, Legend)
 
 const store = useIncomeStore()
 const { formatShort } = useChartFormat()
+const incomeTypes = useOrderedIncomeTypes()
 
 const currentYear = dayjs().year()
 const selectedYear = ref(String(currentYear))
@@ -96,7 +97,7 @@ const yearEntries = computed(() =>
 const hasData = computed(() => yearEntries.value.length > 0)
 
 const chartData = computed(() => {
-  const datasets = incomeTypes.map((type, idx) => {
+  const datasets = incomeTypes.value.map((type, idx) => {
     const data = MONTH_LABELS.map((_, monthIdx) => {
       if (isFutureMonth(selectedYear.value, monthIdx)) return null
       const monthStr = `${selectedYear.value}-${String(monthIdx + 1).padStart(2, '0')}`

@@ -1,105 +1,60 @@
 <template>
-  <el-dialog
-    v-model="dialogVisible"
-    width="320"
-    center
-    align-center
-    class="income-dialog"
-    @closed="resetForm"
-  >
-    <section class="dialog-content">
-      <el-form
-        ref="formRef"
-        :model="formModel"
-        :rules="rules"
-        :show-message="false"
-        class="income-form"
-        label-position="top"
-      >
-        <el-form-item label="日期" prop="date">
-          <el-date-picker
-            v-model="formModel.date"
-            type="date"
-            value-format="YYYY-MM-DD"
-            format="YYYY-MM-DD"
-            placeholder="請選擇日期"
-            class="field-control"
-            :editable="false"
-          />
-        </el-form-item>
+  <BaseActionDialog v-model="dialogVisible" :title="dialogTitle" width="320px" :confirm-button-text="submitButtonText"
+    :show-secondary-confirm-button="!isEditing" secondary-confirm-button-text="連續新增"
+    :footer-button-order="['confirm', 'secondaryConfirm', 'cancel']" class="income-dialog" @confirm="submitIncome()"
+    @secondary-confirm="submitIncome(true)" @closed="resetForm">
+    <el-form ref="formRef" :model="formModel" :rules="rules" :show-message="false" class="income-form"
+      label-position="top">
+      <el-form-item label="日期" prop="date">
+        <el-date-picker v-model="formModel.date" type="date" value-format="YYYY-MM-DD" format="YYYY-MM-DD"
+          placeholder="請選擇日期" class="field-control" :editable="false" />
+      </el-form-item>
 
-        <el-form-item label="分類" prop="type">
-          <div class="type-grid">
-            <el-button
-              v-for="o in INCOME_TYPE_OPTIONS"
-              :key="o.value"
-              type="default"
-              class="type-tile"
-              :class="{ 'is-active': formModel.type === o.value }"
-              plain
-              @click="formModel.type = o.value"
-            >
-              <span class="type-tile-content">
-                <el-icon class="type-tile-icon">
-                  <component :is="o.icon" />
-                </el-icon>
-                <div class="type-tile-label">{{ o.label }}</div>
-              </span>
+      <el-form-item label="分類" prop="type">
+        <div
+          ref="typeGridRef"
+          class="type-grid"
+          :class="{ 'is-dragging': isTypeGridDragging }"
+          @mousedown="onTypeGridMouseDown"
+          @mousemove="onTypeGridMouseMove"
+          @mouseup="onTypeGridMouseUp"
+          @mouseleave="onTypeGridMouseUp"
+        >
+          <el-button v-for="o in typeOptions" :key="o.value" type="default" class="type-tile"
+            :class="{ 'is-active': formModel.type === o.value }" plain @click="handleTypeSelect(o.value)">
+            <span class="type-tile-content">
+              <el-icon v-if="o.icon" class="type-tile-icon">
+                <component :is="o.icon" />
+              </el-icon>
+              <div class="type-tile-label">{{ o.label }}</div>
+            </span>
+          </el-button>
+        </div>
+      </el-form-item>
+
+      <el-form-item label="金額" prop="amount" class="amount-form-item">
+        <section class="amount-entry-block">
+          <el-input v-model="formattedAmount" inputmode="numeric" placeholder="請輸入金額" class="amount-input">
+            <template #prepend>NT$</template>
+          </el-input>
+
+          <div class="keypad-grid">
+            <el-button v-for="key in keypadKeys" :key="key" type="default" class="keypad-key"
+              @click="handleKeypadPress(key)">
+              {{ key }}
             </el-button>
           </div>
-        </el-form-item>
+        </section>
+      </el-form-item>
+    </el-form>
 
-        <el-form-item label="金額" prop="amount" class="amount-form-item">
-          <section class="amount-entry-block">
-            <el-input
-              v-model="formattedAmount"
-              inputmode="numeric"
-              placeholder="請輸入金額"
-              class="amount-input"
-            >
-              <template #prepend>NT$</template>
-            </el-input>
-
-            <div class="keypad-grid">
-              <el-button
-                v-for="key in keypadKeys"
-                :key="key"
-                type="default"
-                class="keypad-key"
-                @click="handleKeypadPress(key)"
-              >
-                {{ key }}
-              </el-button>
-            </div>
-          </section>
-        </el-form-item>
-      </el-form>
-
-      <el-form
-        ref="descFormRef"
-        :model="formModel"
-        label-position="top"
-        class="income-form"
-      >
-        <el-form-item label="說明" prop="description">
-          <el-input
-            v-model="formModel.description"
-            type="textarea"
-            :rows="3"
-            maxlength="100"
-            show-word-limit
-            resize="none"
-            placeholder="補充這筆收入的來源或備註"
-          />
-        </el-form-item>
-      </el-form>
-
-      <el-space class="action-buttons" :class="{ 'is-editing': isEditing }">
-        <el-button type="primary" class="submit-button" @click="submitIncome()">{{ submitButtonText }}</el-button>
-        <el-button v-if="!isEditing" class="submit-button" @click="submitIncome(true)">連續新增</el-button>
-      </el-space>
-    </section>
-  </el-dialog>
+    <el-form ref="descFormRef" :model="formModel" label-position="top" class="income-form">
+      <el-form-item label="說明" prop="description">
+        <el-input v-model="formModel.description" type="textarea" :rows="3" maxlength="100" show-word-limit resize="none"
+          placeholder="補充這筆收入的來源或備註" />
+      </el-form-item>
+    </el-form>
+  </BaseActionDialog>
 </template>
 
 <script setup lang="ts">
@@ -107,19 +62,47 @@ import { computed, nextTick, reactive, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
+import type { Component } from 'vue'
+import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import { useIncomeStore } from '../../stores/income'
-import { INCOME_TYPE_OPTIONS, INCOME_TYPES } from '../../configs/constant'
+import { useAuthStore } from '../../stores/auth'
 import type { IncomeEntry, IncomeType } from '../../types/income'
 import { storeToRefs } from 'pinia'
+import BaseActionDialog from '../layout/BaseActionDialog.vue'
+
+interface TypeOption {
+  value: IncomeType
+  label: string
+  icon?: Component
+}
 
 const formRef = ref<FormInstance>()
+const typeGridRef = ref<HTMLElement | null>(null)
 const keypadKeys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', '←'] as const
 const amountInput = ref('')
+const isTypeGridDragging = ref(false)
+const typeGridStartX = ref(0)
+const typeGridStartScrollLeft = ref(0)
+const typeGridMovedDistance = ref(0)
+const allIcons = ElementPlusIconsVue as Record<string, Component>
 const getTodayDate = () => dayjs().format('YYYY-MM-DD')
+
+const authStore = useAuthStore()
+const { incomeTypeConfigs } = storeToRefs(authStore)
+
+const typeOptions = computed<TypeOption[]>(() => {
+  return incomeTypeConfigs.value.map((config) => ({
+    value: config.label as IncomeType,
+    label: config.label,
+    icon: allIcons[config.icon],
+  }))
+})
+
+const getDefaultType = () => (typeOptions.value[0]?.value ?? '') as IncomeType
 
 const formModel = reactive({
   date: getTodayDate(),
-  type: INCOME_TYPES[0] as IncomeType,
+  type: getDefaultType(),
   amount: null as number | null,
   description: '',
 })
@@ -145,6 +128,7 @@ const rules: FormRules<typeof formModel> = {
 const incomeStore = useIncomeStore()
 const { editingEntry } = storeToRefs(incomeStore)
 const isEditing = computed(() => Boolean(editingEntry.value))
+const dialogTitle = computed(() => (isEditing.value ? '編輯收入' : '新增收入'))
 const submitButtonText = computed(() => (isEditing.value ? '儲存' : '新增'))
 
 const dialogVisible = computed({
@@ -208,9 +192,42 @@ const backspaceAmount = () => {
   formModel.amount = amountInput.value ? Number(amountInput.value) : null
 }
 
+const onTypeGridMouseDown = (event: MouseEvent) => {
+  if (!typeGridRef.value) {
+    return
+  }
+
+  isTypeGridDragging.value = true
+  typeGridStartX.value = event.clientX
+  typeGridStartScrollLeft.value = typeGridRef.value.scrollLeft
+  typeGridMovedDistance.value = 0
+}
+
+const onTypeGridMouseMove = (event: MouseEvent) => {
+  if (!isTypeGridDragging.value || !typeGridRef.value) {
+    return
+  }
+
+  const deltaX = event.clientX - typeGridStartX.value
+  typeGridMovedDistance.value = Math.max(typeGridMovedDistance.value, Math.abs(deltaX))
+  typeGridRef.value.scrollLeft = typeGridStartScrollLeft.value - deltaX
+}
+
+const onTypeGridMouseUp = () => {
+  isTypeGridDragging.value = false
+}
+
+const handleTypeSelect = (value: IncomeType) => {
+  if (typeGridMovedDistance.value > 6) {
+    return
+  }
+
+  formModel.type = value
+}
+
 const resetForm = () => {
   formModel.date = getTodayDate()
-  formModel.type = INCOME_TYPES[0] as IncomeType
+  formModel.type = getDefaultType()
   formModel.description = ''
   clearAmount()
   formRef.value?.clearValidate()
@@ -228,7 +245,7 @@ const applyEntryToForm = (entry: IncomeEntry) => {
 }
 
 const resetForContinuousEntry = () => {
-  formModel.type = INCOME_TYPES[0] as IncomeType
+  formModel.type = getDefaultType()
   formModel.description = ''
   clearAmount()
   nextTick(() => {
@@ -236,25 +253,37 @@ const resetForContinuousEntry = () => {
   })
 }
 
+watch(
+  typeOptions,
+  (nextOptions) => {
+    if (isEditing.value || nextOptions.some((option) => option.value === formModel.type)) {
+      return
+    }
+
+    formModel.type = getDefaultType()
+  },
+  { immediate: true },
+)
+
 const submitIncome = async (keepOpen = false) => {
   if (!formRef.value) {
     return
   }
 
   if (!formModel.date) {
-    await formRef.value.validateField('date').catch(() => {})
+    await formRef.value.validateField('date').catch(() => { })
     ElMessage.warning('請先選擇日期')
     return
   }
 
   if (!formModel.type) {
-    await formRef.value.validateField('type').catch(() => {})
+    await formRef.value.validateField('type').catch(() => { })
     ElMessage.warning('請先選擇分類')
     return
   }
 
   if (parsedAmount.value <= 0) {
-    await formRef.value.validateField('amount').catch(() => {})
+    await formRef.value.validateField('amount').catch(() => { })
     ElMessage.warning('請輸入有效金額')
     return
   }
@@ -334,13 +363,20 @@ watch(
 
 .type-grid {
   width: 100%;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: nowrap;
   gap: 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 2px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  cursor: grab;
+  user-select: none;
 }
 
 .type-tile {
-  width: 100%;
+  flex: 0 0 80px;
   height: auto;
   display: flex;
   flex-direction: column;
@@ -356,6 +392,14 @@ watch(
   color: var(--el-text-color-regular);
   margin: 0;
   transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.type-grid::-webkit-scrollbar {
+  display: none;
+}
+
+.type-grid.is-dragging {
+  cursor: grabbing;
 }
 
 :deep(.type-tile .el-button__text) {
@@ -464,17 +508,4 @@ watch(
   box-shadow: none;
 }
 
-.action-buttons {
-  width: 100%;
-
-  :deep(.el-space__item) {
-    width: calc(50% - 4px);
-  }
-}
-
-.action-buttons.is-editing {
-  :deep(.el-space__item) {
-    width: 100%;
-  }
-}
 </style>

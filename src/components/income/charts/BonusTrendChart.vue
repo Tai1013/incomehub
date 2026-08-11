@@ -19,7 +19,7 @@
     <el-dialog v-model="filterDialogVisible" title="篩選條件" width="320px" align-center :lock-scroll="true">
       <div style="display: flex; flex-direction: column; gap: 10px;">
         <el-select v-model="draftType" placeholder="分類" style="width: 100%;">
-          <el-option v-for="o in INCOME_TYPE_OPTIONS" :key="o.value" :label="o.label" :value="o.value" />
+          <el-option v-for="type in incomeTypeOptions" :key="type" :label="type" :value="type" />
         </el-select>
 
         <el-row :gutter="10">
@@ -51,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import dayjs from 'dayjs'
 import { ElMessage } from 'element-plus'
 import { Line } from 'vue-chartjs'
@@ -62,16 +62,17 @@ import {
 import { useIncomeStore } from '../../../stores/income'
 import ChartHeaderTitle from './ChartHeaderTitle.vue'
 import { type IncomeType } from '../../../types/income'
-import { INCOME_TYPE_OPTIONS } from '../../../configs/constant'
 import { useChartFormat } from '../../../composables/useChartFormat'
+import { useOrderedIncomeTypes } from '../../../composables/useOrderedIncomeTypes'
 
 ChartJS.register(CategoryScale, LinearScale, LineElement, PointElement, Tooltip, Legend, Filler)
 
 const store = useIncomeStore()
 const { formatShort } = useChartFormat()
+const incomeTypeOptions = useOrderedIncomeTypes()
 
-const selectedType = ref<IncomeType>('月獎金')
-const selectedTypeLabel = computed(() => INCOME_TYPE_OPTIONS.find(o => o.value === selectedType.value)?.label ?? selectedType.value)
+const selectedType = ref<IncomeType>((incomeTypeOptions.value[0] ?? '') as IncomeType)
+const selectedTypeLabel = computed(() => selectedType.value || '未設定分類')
 
 const currentYear = dayjs().year()
 const defaultStartYear = currentYear - 1
@@ -84,6 +85,26 @@ const filterDialogVisible = ref(false)
 const draftType = ref<IncomeType>(selectedType.value)
 const draftStartYear = ref(defaultStartYear)
 const draftEndYear = ref(defaultEndYear)
+
+watch(
+  incomeTypeOptions,
+  (options) => {
+    if (options.length === 0) {
+      selectedType.value = '' as IncomeType
+      draftType.value = '' as IncomeType
+      return
+    }
+
+    if (!options.includes(selectedType.value)) {
+      selectedType.value = options[0]
+    }
+
+    if (!options.includes(draftType.value)) {
+      draftType.value = options[0]
+    }
+  },
+  { immediate: true },
+)
 
 const yearOptions = computed(() => {
   const years = new Set<number>([currentYear, currentYear - 1])
@@ -101,7 +122,7 @@ const openFilterDialog = () => {
 }
 
 const resetDraftFilter = () => {
-  draftType.value = '月獎金'
+  draftType.value = (incomeTypeOptions.value[0] ?? '') as IncomeType
   draftStartYear.value = defaultStartYear
   draftEndYear.value = defaultEndYear
 }

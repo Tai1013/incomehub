@@ -72,11 +72,12 @@ import {
 } from 'chart.js'
 import { useIncomeStore } from '../../../stores/income'
 import ChartHeaderTitle from './ChartHeaderTitle.vue'
-import { incomeTypes } from '../../../types/income'
+import { useOrderedIncomeTypes } from '../../../composables/useOrderedIncomeTypes'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend)
 
 const store = useIncomeStore()
+const incomeTypes = useOrderedIncomeTypes()
 
 const currentYear = dayjs().year()
 const DEFAULT_START = `${currentYear}-01`
@@ -168,7 +169,7 @@ const totalFormatted = computed(() => {
 
 const chartData = computed(() => {
   // Bar datasets per income type (stacked)
-  const barDatasets = incomeTypes.map((type, idx) => {
+  const barDatasets = incomeTypes.value.map((type, idx) => {
     const monthlyTotals = monthKeys.value.map(monthKey => {
       return rangeEntries.value
         .filter(e => e.type === type && dayjs(e.date).format('YYYY-MM') === monthKey)

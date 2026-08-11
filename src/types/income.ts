@@ -1,4 +1,9 @@
-export type IncomeType = '薪水' | '月獎金' | '年獎金' | '年終' | '節日禮金' | '股票利息'
+export type IncomeType = '薪水' | '月獎金' | '年獎金' | '年終' | '節日禮金' | '股票利息' | (string & {})
+
+export interface IncomeTypeConfig {
+  icon: string
+  label: string
+}
 
 export interface IncomeEntry {
   id: string
@@ -7,6 +12,3 @@ export interface IncomeEntry {
   amount: number
   description?: string
 }
-
-/** @deprecated 請改從 configs/constant 引入 INCOME_TYPES */
-export { INCOME_TYPES as incomeTypes } from '../configs/constant'

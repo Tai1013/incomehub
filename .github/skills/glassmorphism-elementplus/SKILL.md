@@ -33,6 +33,13 @@ Use this skill when implementing frosted-glass (glassmorphism) visuals in this r
 - Do not create new custom utility classes for one-off spacing/alignment when Element Plus props or components can achieve the same result.
 - If custom style is unavoidable, make it reusable and place it in shared style files instead of a single component style block.
 
+## Global Border Radius Rule
+
+**All glassmorphism surfaces use `border-radius: 16px`.** This is enforced globally in `src/styles/_element-plus-overrides.scss`:
+- `.el-card`, `.el-dialog`, `.el-drawer`, `.el-message-box` — glass background + `border-radius: 16px`
+- `.el-button:not(.is-circle)`, `.el-tag`, `.el-alert`, `.el-message`, `.el-popover`, `.el-dropdown-menu` — `border-radius: 16px`
+- Do **NOT** override `border-radius` per-component; always extend the global rule in `_element-plus-overrides.scss` instead.
+
 ## Suggested Glass Tokens
 
 Use project-level tokens for consistency (names can be adjusted to fit current naming conventions):

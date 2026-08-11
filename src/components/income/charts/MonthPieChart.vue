@@ -49,13 +49,14 @@ import { PolarArea } from 'vue-chartjs'
 import { Chart as ChartJS, ArcElement, RadialLinearScale, Tooltip, Legend } from 'chart.js'
 import { useIncomeStore } from '../../../stores/income'
 import ChartHeaderTitle from './ChartHeaderTitle.vue'
-import { incomeTypes } from '../../../types/income'
 import { useChartFormat } from '../../../composables/useChartFormat'
+import { useOrderedIncomeTypes } from '../../../composables/useOrderedIncomeTypes'
 
 ChartJS.register(ArcElement, RadialLinearScale, Tooltip, Legend)
 
 const store = useIncomeStore()
 const { formatShort } = useChartFormat()
+const incomeTypes = useOrderedIncomeTypes()
 
 const currentDate = dayjs()
 const DEFAULT_YEAR = currentDate.year()
@@ -114,13 +115,13 @@ const totalFormatted = computed(() => {
 })
 
 const chartData = computed(() => {
-  const totals = incomeTypes.map(type =>
+  const totals = incomeTypes.value.map(type =>
     monthEntries.value.filter(e => e.type === type).reduce((s, e) => s + e.amount, 0)
   )
-  const activeIndices = incomeTypes.map((_, i) => i).filter(i => totals[i] > 0)
+  const activeIndices = incomeTypes.value.map((_, i) => i).filter(i => totals[i] > 0)
 
   return {
-    labels: activeIndices.map(i => incomeTypes[i]),
+    labels: activeIndices.map(i => incomeTypes.value[i]),
     datasets: [{
       data: activeIndices.map(i => totals[i]),
       backgroundColor: activeIndices.map(i => COLORS[i % COLORS.length] + 'cc'),

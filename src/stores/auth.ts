@@ -5,12 +5,14 @@ import { supabase } from '../lib/supabase'
 import { useLoading } from '../composables/useLoading'
 import { FAVORITE_CHART_KEYS } from '../types/chart'
 import type { FavoriteChartKey } from '../types/chart'
+import type { IncomeTypeConfig } from '../types/income'
 
 interface ProfileRow {
   role: string | null
   yearly_target: number | null
   monthly_target: number | null
   favorite_chart_keys: string[] | null
+  income_type_configs: { icon: string; label: string }[] | null
 }
 
 export const useAuthStore = defineStore('auth', () => {
@@ -23,10 +25,23 @@ export const useAuthStore = defineStore('auth', () => {
   const yearlyTarget = ref<number | null>(null)
   const monthlyTarget = ref<number | null>(null)
   const favoriteChartKeys = ref<FavoriteChartKey[]>([])
+  const incomeTypeConfigs = ref<IncomeTypeConfig[]>([])
   let initialized = false
   let roleRequestUserId: string | null = null
 
   const favoriteChartKeySet = new Set(FAVORITE_CHART_KEYS)
+
+  const toIncomeTypeConfigs = (configs: unknown): IncomeTypeConfig[] => {
+    if (!Array.isArray(configs)) return []
+    return configs.filter(
+      (item): item is IncomeTypeConfig =>
+        item !== null &&
+        typeof item === 'object' &&
+        typeof item.icon === 'string' &&
+        typeof item.label === 'string' &&
+        item.label.trim() !== ''
+    )
+  }
 
   const toFavoriteChartKeys = (keys: unknown): FavoriteChartKey[] => {
     if (!Array.isArray(keys)) {
@@ -46,6 +61,7 @@ export const useAuthStore = defineStore('auth', () => {
       yearlyTarget.value = null
       monthlyTarget.value = null
       favoriteChartKeys.value = []
+      incomeTypeConfigs.value = []
       return
     }
 
@@ -59,7 +75,7 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('role, yearly_target, monthly_target, favorite_chart_keys')
+        .select('role, yearly_target, monthly_target, favorite_chart_keys, income_type_configs')
         .eq('id', userId)
         .maybeSingle()
 
@@ -70,6 +86,7 @@ export const useAuthStore = defineStore('auth', () => {
         yearlyTarget.value = null
         monthlyTarget.value = null
         favoriteChartKeys.value = []
+        incomeTypeConfigs.value = []
         return
       }
 
@@ -81,6 +98,7 @@ export const useAuthStore = defineStore('auth', () => {
         yearlyTarget.value = null
         monthlyTarget.value = null
         favoriteChartKeys.value = []
+        incomeTypeConfigs.value = []
         return
       }
 
@@ -88,6 +106,7 @@ export const useAuthStore = defineStore('auth', () => {
       yearlyTarget.value = profile.yearly_target ?? null
       monthlyTarget.value = profile.monthly_target ?? null
       favoriteChartKeys.value = toFavoriteChartKeys(profile.favorite_chart_keys)
+      incomeTypeConfigs.value = toIncomeTypeConfigs(profile.income_type_configs)
       roleStatus.value = profile.role ? 'loaded' : 'missing'
     } finally {
       unLoad()
@@ -138,6 +157,7 @@ export const useAuthStore = defineStore('auth', () => {
         throw error
       }
       user.value = data.user
+
       return data
     } finally {
       loading.value = false
@@ -176,10 +196,26 @@ export const useAuthStore = defineStore('auth', () => {
       yearlyTarget.value = null
       monthlyTarget.value = null
       favoriteChartKeys.value = []
+      incomeTypeConfigs.value = []
     } finally {
       loading.value = false
       unLoad()
     }
+  }
+
+  const updateIncomeTypeConfigs = async (configs: IncomeTypeConfig[]) => {
+    const userId = user.value?.id
+    if (!userId) return
+
+    const { error } = await supabase
+      .from('profiles')
+      .upsert(
+        { id: userId, income_type_configs: configs },
+        { onConflict: 'id' }
+      )
+
+    if (error) throw error
+    incomeTypeConfigs.value = configs
   }
 
   const updateTargets = async (yearly: number | null, monthly: number | null) => {
@@ -208,10 +244,12 @@ export const useAuthStore = defineStore('auth', () => {
     yearlyTarget,
     monthlyTarget,
     favoriteChartKeys,
+    incomeTypeConfigs,
     initAuth,
     signUpWithEmail,
     signInWithEmail,
     signOut,
     updateTargets,
+    updateIncomeTypeConfigs,
   }
 })

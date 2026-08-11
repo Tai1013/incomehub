@@ -40,13 +40,14 @@ import { Bar } from 'vue-chartjs'
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip, Legend } from 'chart.js'
 import { useIncomeStore } from '../../../stores/income'
 import ChartHeaderTitle from './ChartHeaderTitle.vue'
-import { incomeTypes } from '../../../types/income'
 import { useChartFormat } from '../../../composables/useChartFormat'
+import { useOrderedIncomeTypes } from '../../../composables/useOrderedIncomeTypes'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend)
 
 const store = useIncomeStore()
 const { formatShort } = useChartFormat()
+const incomeTypes = useOrderedIncomeTypes()
 
 const currentYear = dayjs().year()
 const selectedYear = ref(String(currentYear))
@@ -95,7 +96,7 @@ const totalFormatted = computed(() => {
 })
 
 const chartData = computed(() => {
-  const datasets = incomeTypes.map((type, idx) => {
+  const datasets = incomeTypes.value.map((type, idx) => {
     const data = QUARTER_MONTHS.map(months =>
       yearEntries.value
         .filter(e => e.type === type && months.some(m => e.date.startsWith(`${selectedYear.value}-${m}`)))

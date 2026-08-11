@@ -38,11 +38,12 @@ const router = useRouter()
 <style scoped lang="scss">
 .bottom-nav {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-around;
-  height: 52px;
+  height: calc(52px + env(safe-area-inset-bottom, 0px));
   margin: 0;
   padding: 0 8px;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0.5) 100%);
   border: 1px solid rgba(255, 255, 255, 0.72);
   border-top-color: rgba(255, 255, 255, 0.82);
@@ -50,7 +51,6 @@ const router = useRouter()
   backdrop-filter: blur(20px) saturate(185%);
   -webkit-backdrop-filter: blur(20px) saturate(185%);
   flex-shrink: 0;
-  padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
 .nav-item {
@@ -68,6 +68,7 @@ const router = useRouter()
   border-radius: 14px;
   transition: color 0.2s ease, background-color 0.2s ease;
   padding: 0;
+  height: 52px;
 
   &.active {
     color: var(--el-color-primary);

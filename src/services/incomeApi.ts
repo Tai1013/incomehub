@@ -179,3 +179,13 @@ export const setFavoriteCharts = async (keys: FavoriteChartKey[]) => {
   const nextKeys = normalizeFavoriteChartKeys(keys)
   await updateFavoriteChartKeys(userId, nextKeys)
 }
+
+export const isIncomeTypeInUse = async (label: string): Promise<boolean> => {
+  const { count, error } = await supabase
+    .from('income_entries')
+    .select('id', { count: 'exact', head: true })
+    .eq('income_type', label)
+
+  if (error) throw error
+  return (count ?? 0) > 0
+}

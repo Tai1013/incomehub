@@ -103,8 +103,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import dayjs from 'dayjs'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { ArrowDown, ArrowUp, Delete, EditPen } from '@element-plus/icons-vue'
+import { openConfirm } from '../../services/messageBox'
 import { useIncomeEntries } from '../../composables/useIncomeEntries'
 import { useAuthStore } from '../../stores/auth'
 import { useIncomeStore } from '../../stores/income'
@@ -237,11 +238,8 @@ const yearGroups = computed(() => {
 
 const deleteItem = async (date: string, id: string) => {
   try {
-    await ElMessageBox.confirm('確定要刪除這筆收入嗎？', '刪除確認', {
+    await openConfirm('確定要刪除這筆收入嗎？', '刪除確認', {
       confirmButtonText: '刪除',
-      cancelButtonText: '取消',
-      type: 'warning',
-      center: true,
     })
   } catch {
     return
