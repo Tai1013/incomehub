@@ -1,7 +1,7 @@
 <template>
   <BaseActionDialog v-model="dialogVisible" :title="dialogTitle" width="320px" :confirm-button-text="submitButtonText"
     :show-secondary-confirm-button="!isEditing" secondary-confirm-button-text="連續新增"
-    :footer-button-order="['confirm', 'secondaryConfirm', 'cancel']" class="income-dialog" @confirm="submitIncome()"
+    :footer-button-order="isEditing ? ['cancel', 'confirm'] : ['confirm', 'secondaryConfirm', 'cancel']" class="income-dialog" @confirm="submitIncome()"
     @secondary-confirm="submitIncome(true)" @closed="resetForm">
     <el-form ref="formRef" :model="formModel" :rules="rules" :show-message="false" class="income-form"
       label-position="top">
