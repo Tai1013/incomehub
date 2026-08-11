@@ -38,9 +38,10 @@ const router = useRouter()
 <style scoped lang="scss">
 .bottom-nav {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-around;
-  height: calc(52px + env(safe-area-inset-bottom, 0px));
+  box-sizing: content-box;
+  height: 52px;
   margin: 0;
   padding: 0 8px;
   padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -68,7 +69,6 @@ const router = useRouter()
   border-radius: 14px;
   transition: color 0.2s ease, background-color 0.2s ease;
   padding: 0;
-  height: 52px;
 
   &.active {
     color: var(--el-color-primary);
