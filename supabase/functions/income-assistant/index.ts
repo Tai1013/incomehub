@@ -50,6 +50,15 @@ interface GeminiInteractionResponse {
   }>
 }
 
+class AssistantHttpError extends Error {
+  status: number
+
+  constructor(status: number, message: string) {
+    super(message)
+    this.status = status
+  }
+}
+
 const geminiApiKey = Deno.env.get('GEMINI_API_KEY')
 const geminiModel = Deno.env.get('GEMINI_MODEL') ?? 'gemini-3.6-flash'
 
@@ -165,6 +174,22 @@ const extractInteractionText = (data: GeminiInteractionResponse) => {
     .trim()
 }
 
+const resolveGeminiErrorMessage = (status: number) => {
+  if (status === 429) {
+    return 'AI 服務目前用量已達上限，請稍後再試。'
+  }
+
+  if (status === 401 || status === 403) {
+    return 'AI 服務設定需要檢查，請稍後再試。'
+  }
+
+  if (status >= 500) {
+    return 'AI 服務暫時不穩定，請稍後再試。'
+  }
+
+  return 'AI 小助手暫時無法回覆，請稍後再試。'
+}
+
 const askGemini = async (payload: IncomeAssistantRequestPayload) => {
   if (!geminiApiKey) {
     return buildMockReply(payload)
@@ -173,15 +198,14 @@ const askGemini = async (payload: IncomeAssistantRequestPayload) => {
   const response = await createGeminiInteraction(payload)
 
   if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(`Gemini Interactions API request failed: ${response.status} ${errorText}`)
+    throw new AssistantHttpError(response.status, resolveGeminiErrorMessage(response.status))
   }
 
   const data = await response.json() as GeminiInteractionResponse
   const reply = extractInteractionText(data)
 
   if (!reply) {
-    throw new Error('Gemini Interactions API did not return text')
+    throw new AssistantHttpError(502, 'AI 服務暫時沒有回傳內容，請稍後再試。')
   }
 
   return reply
@@ -207,6 +231,7 @@ Deno.serve(async (request) => {
     return jsonResponse({ reply })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'
-    return jsonResponse({ error: message }, 500)
+    const status = error instanceof AssistantHttpError ? error.status : 500
+    return jsonResponse({ error: message }, status)
   }
 })

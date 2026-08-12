@@ -200,6 +200,14 @@ const resolveAssistantReply = (replyMessageId: number, content: string) => {
   scrollToBottom()
 }
 
+const resolveAssistantErrorReply = (error: unknown) => {
+  if (error instanceof Error && error.message.trim()) {
+    return error.message.trim()
+  }
+
+  return assistantErrorReply
+}
+
 const createNewTopic = () => {
   if (!canCreateNewTopic.value) {
     return
@@ -249,8 +257,8 @@ const submitQuestion = async (selectedQuestion = '') => {
   try {
     const reply = await askIncomeAssistant({ question, entries: incomeEntries.value })
     resolveAssistantReply(replyMessageId, reply)
-  } catch {
-    resolveAssistantReply(replyMessageId, assistantErrorReply)
+  } catch (error) {
+    resolveAssistantReply(replyMessageId, resolveAssistantErrorReply(error))
   }
 }
 

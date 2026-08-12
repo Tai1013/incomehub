@@ -42,6 +42,7 @@ jobs:
           VITE_APP_BASE: /incomehub/
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_AI_ASSISTANT_MODE: edge
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

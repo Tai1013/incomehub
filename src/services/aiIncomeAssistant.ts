@@ -43,8 +43,10 @@ interface IncomeAssistantRequestPayload {
 
 interface IncomeAssistantResponse {
   reply?: string
+  error?: string
 }
 
+const defaultAssistantErrorReply = 'AI 小助手暫時無法回覆，請稍後再試。'
 const assistantReplyDelay = 900
 const assistantMode = import.meta.env.VITE_AI_ASSISTANT_MODE === 'edge' ? 'edge' : 'mock'
 const assistantFunctionName = 'income-assistant'
@@ -170,17 +172,53 @@ const buildIncomeSummaryReply = (payload: IncomeAssistantRequestPayload) => {
     .join('\n')
 }
 
+const resolveFunctionErrorMessage = async (error: unknown) => {
+  const context = (error as { context?: unknown }).context
+
+  if (!(context instanceof Response)) {
+    return defaultAssistantErrorReply
+  }
+
+  try {
+    const data = await context.clone().json() as IncomeAssistantResponse
+
+    if (data.error?.trim()) {
+      return data.error.trim()
+    }
+  } catch {
+    // Fall back to status-based messages below.
+  }
+
+  if (context.status === 429) {
+    return 'AI 服務目前用量已達上限，請稍後再試。'
+  }
+
+  if (context.status === 401 || context.status === 403) {
+    return 'AI 服務設定需要檢查，請稍後再試。'
+  }
+
+  if (context.status >= 500) {
+    return 'AI 服務暫時不穩定，請稍後再試。'
+  }
+
+  return defaultAssistantErrorReply
+}
+
 const askIncomeAssistantByEdgeFunction = async (payload: IncomeAssistantRequestPayload) => {
   const { data, error } = await supabase.functions.invoke<IncomeAssistantResponse>(assistantFunctionName, {
     body: payload,
   })
 
   if (error) {
-    throw error
+    throw new Error(await resolveFunctionErrorMessage(error))
+  }
+
+  if (data?.error) {
+    throw new Error(data.error)
   }
 
   if (!data?.reply) {
-    throw new Error('AI 小助手沒有回傳內容')
+    throw new Error(defaultAssistantErrorReply)
   }
 
   return data.reply
