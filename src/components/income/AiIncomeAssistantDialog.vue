@@ -11,7 +11,7 @@
       <el-scrollbar ref="assistantScrollbarRef" class="assistant-scroll">
         <div class="assistant-content">
           <el-alert
-            title="目前先完成 UI，尚未串接 AI API。"
+            title="AI 會根據目前收入摘要產生分析，結果可作為檢視趨勢的參考。"
             type="info"
             show-icon
             :closable="false"
@@ -32,6 +32,7 @@
                     <span class="typing-dot" />
                     <span class="typing-dot" />
                   </span>
+                  <div v-else-if="item.role === 'assistant'" class="message-markdown" v-html="renderAssistantContent(item.content)" />
                   <template v-else>
                     {{ item.content }}
                   </template>
@@ -85,9 +86,12 @@
 </template>
 
 <script setup lang="ts">
+import MarkdownIt from 'markdown-it'
 import { computed, nextTick, onBeforeUnmount, ref } from 'vue'
 import { Plus, Promotion } from '@element-plus/icons-vue'
 import type { ScrollbarInstance } from 'element-plus'
+import { askIncomeAssistant } from '../../services/aiIncomeAssistant'
+import { useIncomeStore } from '../../stores/income'
 
 type AssistantMessageRole = 'assistant' | 'user'
 
@@ -116,24 +120,30 @@ const dialogVisible = defineModel<boolean>({ default: false })
 
 const quickQuestions = [
   '我今年收入比去年差在哪？',
-  '哪幾個月收入異常？',
-  '如果扣掉年終，收入成長率還正常嗎？',
-  '我的獎金佔比是不是太高？',
+  '今年收入成長主要來自哪些月份？',
+  '今年收入主要靠哪幾種類型撐起來？',
+  '我的收入是否太集中在少數月份或類型？',
   '幫我用保守一點的方式估今年總收入',
 ]
-const assistantReplyContent = '目前這裡會先保留為 UI 預覽。串接 AI 後，會用已整理好的收入摘要回答這個問題，並在免費額度用完時顯示提示。'
-const assistantReplyDelay = 900
+const assistantErrorReply = '目前暫時無法產生分析，請稍後再試。'
+const markdownRenderer = new MarkdownIt({
+  breaks: true,
+  html: false,
+  linkify: true,
+})
 
+markdownRenderer.disable(['image'])
+
+const incomeStore = useIncomeStore()
 const draftQuestion = ref('')
 const messageId = ref(1)
 const assistantScrollbarRef = ref<ScrollbarInstance>()
-const assistantReplyTimers = new Set<number>()
 const createInitialMessages = (): AssistantTimelineItem[] => [
   {
     id: 1,
     kind: 'message',
     role: 'assistant',
-    content: '可以問我收入成長、異常月份、獎金占比或保守預估。下一步串接 Gemini 後，會依你的收入摘要回覆分析。',
+    content: '可以問我收入成長、月份變化、收入結構、集中風險或保守預估，我會依你的收入摘要回覆分析。',
   },
 ]
 const messages = ref<AssistantTimelineItem[]>(createInitialMessages())
@@ -172,7 +182,11 @@ const scrollToBottom = async () => {
   scrollbar.setScrollTop(wrap.scrollHeight)
 }
 
-const resolveAssistantReply = (replyMessageId: number) => {
+const renderAssistantContent = (content: string) => markdownRenderer.render(content)
+
+const incomeEntries = computed(() => incomeStore.dailyLists.flatMap((group) => group.items))
+
+const resolveAssistantReply = (replyMessageId: number, content: string) => {
   const replyMessage = messages.value.find(
     (item): item is AssistantMessage => item.kind === 'message' && item.id === replyMessageId,
   )
@@ -181,7 +195,7 @@ const resolveAssistantReply = (replyMessageId: number) => {
     return
   }
 
-  replyMessage.content = assistantReplyContent
+  replyMessage.content = content
   replyMessage.isPending = false
   scrollToBottom()
 }
@@ -206,7 +220,7 @@ const createNewTopic = () => {
   scrollToBottom()
 }
 
-const submitQuestion = (selectedQuestion = '') => {
+const submitQuestion = async (selectedQuestion = '') => {
   const question = (selectedQuestion || draftQuestion.value).trim()
 
   if (!question) {
@@ -227,21 +241,26 @@ const submitQuestion = (selectedQuestion = '') => {
     content: '',
     isPending: true,
   })
-  const replyTimer = window.setTimeout(() => {
-    assistantReplyTimers.delete(replyTimer)
-    resolveAssistantReply(replyMessageId)
-  }, assistantReplyDelay)
-
-  assistantReplyTimers.add(replyTimer)
   if (!selectedQuestion) {
     draftQuestion.value = ''
   }
   scrollToBottom()
+
+  try {
+    const reply = await askIncomeAssistant({ question, entries: incomeEntries.value })
+    resolveAssistantReply(replyMessageId, reply)
+  } catch {
+    resolveAssistantReply(replyMessageId, assistantErrorReply)
+  }
 }
 
 onBeforeUnmount(() => {
-  assistantReplyTimers.forEach((replyTimer) => window.clearTimeout(replyTimer))
-  assistantReplyTimers.clear()
+  messages.value.forEach((item) => {
+    if (item.kind === 'message' && item.isPending) {
+      item.content = assistantErrorReply
+      item.isPending = false
+    }
+  })
 })
 </script>
 
@@ -330,6 +349,63 @@ onBeforeUnmount(() => {
   color: #1f2937;
   line-height: 1.55;
   white-space: pre-wrap;
+}
+
+.message-markdown {
+  white-space: normal;
+}
+
+.message-markdown :deep(p) {
+  margin: 0 0 8px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.message-markdown :deep(ul),
+.message-markdown :deep(ol) {
+  margin: 6px 0 8px;
+  padding-left: 20px;
+}
+
+.message-markdown :deep(li) {
+  margin: 4px 0;
+}
+
+.message-markdown :deep(h1),
+.message-markdown :deep(h2),
+.message-markdown :deep(h3) {
+  margin: 4px 0 8px;
+  color: #111827;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.message-markdown :deep(strong) {
+  color: #111827;
+  font-weight: 700;
+}
+
+.message-markdown :deep(code) {
+  padding: 1px 5px;
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.08);
+  color: #111827;
+  font-size: 0.92em;
+}
+
+.message-markdown :deep(pre) {
+  margin: 8px 0;
+  padding: 8px 10px;
+  overflow-x: auto;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.08);
+}
+
+.message-markdown :deep(pre code) {
+  padding: 0;
+  background: transparent;
 }
 
 .message-bubble.is-pending {
