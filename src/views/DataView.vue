@@ -2,13 +2,32 @@
   <div class="data-view-root">
     <div class="toolbar-wrap">
       <section class="favorite-toolbar" :class="{ 'is-sticky': editing }">
-      <el-button v-if="!editing" type="primary" plain @click="chartFavoritesStore.enterEditMode()">設定我的最愛</el-button>
-      <template v-else>
-        <el-button type="primary" :loading="saving" @click="saveFavoriteSelection">加到首頁顯示</el-button>
-        <el-button @click="chartFavoritesStore.cancelEditMode()">取消</el-button>
-      </template>
+        <el-row align="middle" justify="space-between">
+          <el-col :span="18">
+            <el-space wrap>
+              <el-button v-if="!editing" type="primary" plain @click="chartFavoritesStore.enterEditMode()">設定我的最愛</el-button>
+              <template v-else>
+                <el-button type="primary" :loading="saving" @click="saveFavoriteSelection">加到首頁顯示</el-button>
+                <el-button @click="chartFavoritesStore.cancelEditMode()">取消</el-button>
+              </template>
+            </el-space>
+          </el-col>
+          <el-col :span="6" style="text-align: right;">
+            <el-tooltip content="AI 小助手" placement="bottom">
+              <el-button
+                type="primary"
+                circle
+                :icon="ChatDotRound"
+                aria-label="開啟 AI 小助手"
+                @click="aiAssistantVisible = true"
+              />
+            </el-tooltip>
+          </el-col>
+        </el-row>
       </section>
     </div>
+
+    <AiIncomeAssistantDialog v-model="aiAssistantVisible" />
 
     <section v-for="chart in CHART_DEFINITIONS" :id="chart.anchor" :key="chart.key" class="chart-anchor">
       <component :is="chart.component" />
@@ -17,15 +36,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import { ChatDotRound } from '@element-plus/icons-vue'
 import { storeToRefs } from 'pinia'
 import { CHART_DEFINITIONS } from '../configs/charts'
+import AiIncomeAssistantDialog from '../components/income/AiIncomeAssistantDialog.vue'
 import { useChartFavoritesStore } from '../stores/chartFavorites'
 
 const chartFavoritesStore = useChartFavoritesStore()
 const { editing, loading } = storeToRefs(chartFavoritesStore)
 const saving = computed(() => loading.value)
+const aiAssistantVisible = ref(false)
 
 const saveFavoriteSelection = async () => {
   try {
