@@ -76,12 +76,6 @@ const jsonResponse = (body: unknown, status = 200) => new Response(JSON.stringif
   },
 })
 
-const formatShort = (value: number) => {
-  if (value >= 1_000_000) return `${Number((value / 1_000_000).toFixed(1))}M`
-  if (value >= 1_000) return `${Number((value / 1_000).toFixed(1))}K`
-  return `${value}`
-}
-
 const isIncomeAssistantRequestPayload = (payload: unknown): payload is IncomeAssistantRequestPayload => {
   if (!payload || typeof payload !== 'object') {
     return false
@@ -89,30 +83,6 @@ const isIncomeAssistantRequestPayload = (payload: unknown): payload is IncomeAss
 
   const candidate = payload as Partial<IncomeAssistantRequestPayload>
   return typeof candidate.question === 'string' && candidate.locale === 'zh-TW' && !!candidate.summary
-}
-
-const buildMockReply = ({ question, summary }: IncomeAssistantRequestPayload) => {
-  if (summary.entryCount === 0) {
-    return `我收到你的問題：「${question}」\n\n目前 Edge Function 已收到請求，但收入摘要裡還沒有資料。新增收入後，就能分析成長率、異常月份和收入組成。`
-  }
-
-  const topTypeLines = summary.topTypes.map((item) => `- ${item.label}: ${formatShort(item.amount)}`).join('\n')
-
-  return [
-    `我收到你的問題：「${question}」`,
-    '',
-    '這是 Supabase Edge Function 回傳的 mock 分析：',
-    summary.currentYear ? `${summary.currentYear.label} 年收入合計約 ${formatShort(summary.currentYear.amount)}。` : '',
-    summary.previousYear && summary.yearGrowthRate !== null
-      ? `和 ${summary.previousYear.label} 年相比，成長率約 ${summary.yearGrowthRate.toFixed(1)}%。`
-      : '目前缺少前一年完整資料，所以暫時不計算年成長率。',
-    summary.topMonth ? `收入最高的月份是 ${summary.topMonth.label}，約 ${formatShort(summary.topMonth.amount)}。` : '',
-    topTypeLines ? `主要收入來源：\n${topTypeLines}` : '',
-    '',
-    '下一步可以在這裡改成呼叫 Gemini API。',
-  ]
-    .filter(Boolean)
-    .join('\n')
 }
 
 const buildGeminiPrompt = (payload: IncomeAssistantRequestPayload) => [
@@ -192,7 +162,7 @@ const resolveGeminiErrorMessage = (status: number) => {
 
 const askGemini = async (payload: IncomeAssistantRequestPayload) => {
   if (!geminiApiKey) {
-    return buildMockReply(payload)
+    throw new AssistantHttpError(500, 'AI 服務尚未完成設定，請稍後再試。')
   }
 
   const response = await createGeminiInteraction(payload)

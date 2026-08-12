@@ -47,6 +47,7 @@ interface IncomeAssistantResponse {
 }
 
 const defaultAssistantErrorReply = 'AI 小助手暫時無法回覆，請稍後再試。'
+const authRequiredAssistantErrorReply = '登入狀態已過期，請重新登入後再使用 AI 小助手。'
 const assistantReplyDelay = 900
 const assistantMode = import.meta.env.VITE_AI_ASSISTANT_MODE === 'edge' ? 'edge' : 'mock'
 const assistantFunctionName = 'income-assistant'
@@ -194,7 +195,7 @@ const resolveFunctionErrorMessage = async (error: unknown) => {
   }
 
   if (context.status === 401 || context.status === 403) {
-    return 'AI 服務設定需要檢查，請稍後再試。'
+    return authRequiredAssistantErrorReply
   }
 
   if (context.status >= 500) {
@@ -205,6 +206,14 @@ const resolveFunctionErrorMessage = async (error: unknown) => {
 }
 
 const askIncomeAssistantByEdgeFunction = async (payload: IncomeAssistantRequestPayload) => {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
+  if (!session) {
+    throw new Error(authRequiredAssistantErrorReply)
+  }
+
   const { data, error } = await supabase.functions.invoke<IncomeAssistantResponse>(assistantFunctionName, {
     body: payload,
   })
